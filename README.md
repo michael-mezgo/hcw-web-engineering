@@ -75,12 +75,18 @@ Find and eliminate the remaining bad coding practices. Consider scope, accidenta
 
 **Theory question:** Select one of your refactorings and explain how JavaScript scope, closures, references, or prototypes caused the original risk. State how you verified that your refactoring preserved behavior.
 
-> **What bad coding practices did you find? Why is it a bad practice and how did you fix it?**
-> 
-> _Present your findings here..._
->
-> ```js
-> console.log('Make use of markdown codesnippets to show and explain good/bad practices!')
+##### **What bad coding practices did you find? Why is it a bad practice and how did you fix it?**
+
+> [!NOTE]
+> Missing `#` for a HEX color value in [style.css](style.css). (Removed line - this pink was ugly 😉)
+> ```css
+> div[class="nav"] {
+> height: 50px;
+> background-color: ff80ff;
+> display: flex;
+> padding: 1% 0;
+> margin-bottom: 10px;
+> }
 > ```
 
 
