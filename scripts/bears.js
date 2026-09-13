@@ -1,4 +1,4 @@
-export function extractBears(wikitext) {
+export async function extractBears(wikitext) {
     var speciesTables = wikitext.split('{{Species table/end}}');
     var seenBinomials = new Set();
     var bearPromises = [];
@@ -16,37 +16,39 @@ export function extractBears(wikitext) {
             seenBinomials.add(binomialMatch[1]);
 
             var fileName = imageMatch ? imageMatch[1].trim().replace('File:', '') : null;
-            var imageUrlPromise = fileName
-                ? fetchImageUrl(fileName)
-                    .then(function(imageUrl) { return verifyImageLoads(imageUrl); })
-                    .catch(function(err) {
-                        console.warn('Could not load image for ' + nameMatch[1] + ':', err);
-                        return null;
-                    })
-                : Promise.resolve(null);
 
             // Collecting one promise per row (instead of rendering inside each
             // .then) keeps the array in wikitext/row order; Promise.all below
             // preserves that order regardless of which fetch resolves first.
-            bearPromises.push(imageUrlPromise.then(function(imageUrl) {
-                return {
-                    name: nameMatch[1],
-                    binomial: binomialMatch[1],
-                    image: imageUrl,
-                    range: rangeMatch ? rangeMatch[1].trim() : "Unknown"
-                };
-            }));
+            bearPromises.push(buildBear(nameMatch, binomialMatch, rangeMatch, fileName));
         });
     });
 
-    return Promise.all(bearPromises).then(function(bears) {
-        var moreBears = document.querySelector('.more_bears');
-        var fragment = document.createDocumentFragment();
-        bears.forEach(function(bear) {
-            fragment.appendChild(renderBearCard(bear));
-        });
-        moreBears.appendChild(fragment);
+    var bears = await Promise.all(bearPromises);
+    var moreBears = document.querySelector('.more_bears');
+    var fragment = document.createDocumentFragment();
+    bears.forEach(function(bear) {
+        fragment.appendChild(renderBearCard(bear));
     });
+    moreBears.appendChild(fragment);
+}
+
+async function buildBear(nameMatch, binomialMatch, rangeMatch, filename) {
+    let imageUrl = null;
+    if (filename) {
+        try {
+            imageUrl = await verifyImageLoads(await fetchImageUrl(filename));
+        } catch (error) {
+            console.warn('Could not load image for ' + nameMatch[1] + ':', error);
+        }
+    }
+
+    return {
+        name: nameMatch[1],
+        binomial: binomialMatch[1],
+        image: imageUrl,
+        range: rangeMatch ? rangeMatch[1].trim() : "Unknown"
+    };
 }
 
 // Confirms the browser can actually decode the image at `url` before we use
