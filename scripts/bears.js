@@ -102,7 +102,7 @@ function renderBearCard(bear) {
     return card;
 }
 
-function fetchImageUrl(fileName) {
+async function fetchImageUrl(fileName) {
     var imageParams = {
         action: "query",
         titles: "File:" + fileName,
@@ -113,29 +113,29 @@ function fetchImageUrl(fileName) {
     };
 
     var url = baseUrl + "?" + new URLSearchParams(imageParams).toString();
-    return fetch(url).then(function(res) {
-        if (!res.ok) {
-            throw new Error('Image lookup request failed with status ' + res.status);
-        }
-        return res.json();
-    }).then(function(data) {
-        if (!data.query || !data.query.pages) {
-            throw new Error('Unexpected image lookup response for ' + fileName);
-        }
-        var pages = data.query.pages;
-        var page = Object.values(pages)[0];
+    const response = await fetch(url);
+    if(!response.ok) {
+        throw new Error('Image lookup request failed with status ' + response.status);
+    }
 
-        if (!page || !page.imageinfo || !page.imageinfo[0] || !page.imageinfo[0].url) {
-            throw new Error('No image found for ' + fileName);
-        }
-        return page.imageinfo[0].url;
-    });
+    const data = await response.json();
+    if (!data.query || !data.query.pages) {
+        throw new Error('Unexpected image lookup response for ' + fileName);
+    }
+
+    var pages = data.query.pages;
+    var page = Object.values(pages)[0];
+
+    if (!page || !page.imageinfo || !page.imageinfo[0] || !page.imageinfo[0].url) {
+        throw new Error('No image found for ' + fileName);
+    }
+    return page.imageinfo[0].url;
 }
 
 var baseUrl = "https://en.wikipedia.org/w/api.php";
 var title = "List_of_ursids";
 
-export function loadBears() {
+export async function loadBears() {
     var params = {
         action: "parse",
         page: title,
@@ -145,27 +145,28 @@ export function loadBears() {
         origin: "*"
     };
 
-    return fetch(baseUrl + "?" + new URLSearchParams(params).toString())
-        .then(function(res) {
-            if (!res.ok) {
-                throw new Error('Bear list request failed with status ' + res.status);
-            }
-            return res.json();
-        })
-        .then(function(data) {
-            if (data.error) {
-                throw new Error(data.error.info || 'Wikipedia API returned an error');
-            }
-            if (!data.parse || !data.parse.wikitext || !data.parse.wikitext['*']) {
-                throw new Error('Bear list response was missing expected content');
-            }
-            return extractBears(data.parse.wikitext['*']);
-        })
-        .catch(function(err) {
-            console.error('Failed to load bears:', err);
-            showBearsError('We couldn\'t load the bear list right now. Please try again later.');
-            throw err;
-        });
+    try {
+        const response = await fetch(baseUrl + "?" + new URLSearchParams(params).toString());
+
+        if (!response.ok) {
+            throw new Error('Bear list request failed with status ' + response.status);
+        }
+
+        const data = await response.json();
+
+        if (data.error) {
+            throw new Error(data.error.info || 'Wikipedia API returned an error');
+        }
+        if (!data.parse || !data.parse.wikitext || !data.parse.wikitext['*']) {
+            throw new Error('Bear list response was missing expected content');
+        }
+
+        return await extractBears(data.parse.wikitext['*']);
+    } catch (err) {
+        console.error('Failed to load bears:', err);
+        showBearsError('We couldn\'t load the bear list right now. Please try again later.');
+        throw err;
+    }
 }
 
 function showBearsError(message) {
