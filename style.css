@@ -65,7 +65,7 @@ article {
 
 div[class="nav"] {
   height: 50px;
-  background-color: ff80ff;
+  background-color: #ff80ff;
   display: flex;
   padding: 1% 0;
   margin-bottom: 10px;
@@ -247,4 +247,14 @@ audio {
 
 .comment-container li p:nth-child(2) {
   flex: 5;
+}
+
+/* Bear list error message */
+
+.bears-error {
+  color: #a30000;
+  background-color: #fde2e2;
+  border: 1px solid #a30000;
+  padding: 10px;
+  border-radius: 4px;
 }
