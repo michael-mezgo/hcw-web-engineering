@@ -1,7 +1,7 @@
-import { extractBears } from "./bears.js";
+import { loadBears } from "./bears.js";
 import searchBears from "./search.js";
 import comments from "./comments.js";
 
-extractBears()
+loadBears();
 searchBears();
 comments();
