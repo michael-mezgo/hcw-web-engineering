@@ -3,7 +3,9 @@ export default function searchBears() {
     document.querySelector('.search').addEventListener('submit', function(e) {
         e.preventDefault();
 
-        document.querySelectorAll('.highlight').forEach(function(el) {
+        var article = document.querySelector('article');
+
+        article.querySelectorAll('.highlight').forEach((el) => {
             var parent = el.parentNode;
             parent.replaceChild(document.createTextNode(el.textContent), el);
             parent.normalize();
@@ -14,7 +16,7 @@ export default function searchBears() {
 
         var regex = new RegExp('(' + searchKey.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
 
-        function walk(node) {
+        const walk = (node) => {
             if (node.nodeType === 3) { // Text node
                 var match = node.nodeValue.match(regex);
                 if (match) {
@@ -26,8 +28,8 @@ export default function searchBears() {
             else if (node.nodeType === 1 && node.tagName !== 'SCRIPT' && node.tagName !== 'STYLE' && node.tagName !== 'FORM') {
                 node.childNodes.forEach(walk);
             }
-        }
+        };
 
-        walk(document.body);
+        walk(article);
     });
 }

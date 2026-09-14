@@ -5,7 +5,7 @@ export default function comments() {
 
     commentWrapper.style.display = 'none';
 
-    showHideBtn.onclick = function() {
+    showHideBtn.onclick = () => {
         var showHideText = showHideBtn.textContent;
         if (showHideText === 'Show comment') {
             showHideBtn.textContent = 'Hide comments';
@@ -22,7 +22,7 @@ export default function comments() {
     var commentField = document.querySelector('#comment');
     var list = document.querySelector('.comment-container');
 
-    form.onsubmit = function(e) {
+    form.onsubmit = (e) => {
         e.preventDefault();
 
         var listItem = document.createElement('li');

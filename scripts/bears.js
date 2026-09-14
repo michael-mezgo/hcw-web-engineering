@@ -3,9 +3,9 @@ export async function extractBears(wikitext) {
     var seenBinomials = new Set();
     var bearPromises = [];
 
-    speciesTables.forEach(function(table) {
+    speciesTables.forEach((table) => {
         var rows = table.split('{{Species table/row');
-        rows.forEach(function(row) {
+        rows.forEach((row) => {
             var nameMatch = row.match(/\|name=\[\[(.*?)\]\]/);
             var binomialMatch = row.match(/\|binomial=(.*?)\n/);
             var imageMatch = row.match(/\|image=(.*?)(?:\s\||\n)/);
@@ -27,7 +27,7 @@ export async function extractBears(wikitext) {
     var bears = await Promise.all(bearPromises);
     var moreBears = document.querySelector('.more_bears');
     var fragment = document.createDocumentFragment();
-    bears.forEach(function(bear) {
+    bears.forEach((bear) => {
         fragment.appendChild(renderBearCard(bear));
     });
     moreBears.appendChild(fragment);
@@ -56,10 +56,10 @@ async function buildBear(nameMatch, binomialMatch, rangeMatch, filename) {
 // being rendered as a dead <img>.
 function verifyImageLoads(url) {
     if (!url) return Promise.resolve(null);
-    return new Promise(function(resolve) {
+    return new Promise((resolve) => {
         var img = new Image();
-        img.onload = function() { resolve(url); };
-        img.onerror = function() { resolve(null); };
+        img.onload = () => { resolve(url); };
+        img.onerror = () => { resolve(null); };
         img.src = url;
     });
 }
