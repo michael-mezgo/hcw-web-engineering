@@ -89,6 +89,26 @@ Find and eliminate the remaining bad coding practices. Consider scope, accidenta
 > }
 > ```
 
+> [!NOTE]
+> No input validation on the comment form in [comments.js](scripts/comments.js) — the app requirement says "both should not be empty", but the original code created a comment from `nameField.value`/`commentField.value` regardless of their content, including empty or whitespace-only input. Fixed by adding `required` to both `<input>` elements in [index.html](index.html) (blocks the native form submit on empty fields) and, in `initCommentForm()`, trimming both values and rejecting whitespace-only input via `setCustomValidity(...)` + `form.reportValidity()`, which also gives the user visible native browser feedback on which field is invalid. Both fields also reset their custom validity on the `input` event, otherwise the browser would keep blocking the form after a failed attempt even once the user corrected the value.
+> ```js
+> nameField.addEventListener('input', () => nameField.setCustomValidity(''));
+> commentField.addEventListener('input', () => commentField.setCustomValidity(''));
+>
+> form.addEventListener('submit', (e) => {
+>     e.preventDefault();
+>
+>     const nameValue = nameField.value.trim();
+>     const commentValue = commentField.value.trim();
+>
+>     nameField.setCustomValidity(nameValue ? '' : 'Please enter your name.');
+>     commentField.setCustomValidity(commentValue ? '' : 'Please enter a comment.');
+>
+>     if (!form.reportValidity()) return;
+>     ...
+> });
+> ```
+
 
 ## 2. Dependency- and Build Management Playground
 Build the application with ``npm`` and a build and a dependency management tool of your choice (e.g. [Vite](https://vitejs.dev/), [Webpack](https://webpack.js.org/), or others). 
