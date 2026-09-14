@@ -29,14 +29,23 @@ function initCommentForm() {
     const commentField = document.querySelector('#comment');
     const list = document.querySelector('.comment-container');
 
+    nameField.addEventListener('input', () => nameField.setCustomValidity(''));
+    commentField.addEventListener('input', () => commentField.setCustomValidity(''));
+
     form.addEventListener('submit', (e) => {
         e.preventDefault();
+
+        const nameValue = nameField.value.trim();
+        const commentValue = commentField.value.trim();
+
+        nameField.setCustomValidity(nameValue ? '' : 'Please enter your name.');
+        commentField.setCustomValidity(commentValue ? '' : 'Please enter a comment.');
+
+        if (!form.reportValidity()) return;
 
         const listItem = document.createElement('li');
         const namePara = document.createElement('p');
         const commentPara = document.createElement('p');
-        const nameValue = nameField.value;
-        const commentValue = commentField.value;
 
         namePara.textContent = nameValue;
         commentPara.textContent = commentValue;
