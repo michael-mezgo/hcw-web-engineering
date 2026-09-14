@@ -1,21 +1,24 @@
+const baseUrl = "https://en.wikipedia.org/w/api.php";
+const title = "List_of_ursids";
+
 export async function extractBears(wikitext) {
-    var speciesTables = wikitext.split('{{Species table/end}}');
-    var seenBinomials = new Set();
-    var bearPromises = [];
+    const speciesTables = wikitext.split('{{Species table/end}}');
+    const seenBinomials = new Set();
+    const bearPromises = [];
 
     speciesTables.forEach((table) => {
-        var rows = table.split('{{Species table/row');
+        const rows = table.split('{{Species table/row');
         rows.forEach((row) => {
-            var nameMatch = row.match(/\|name=\[\[(.*?)\]\]/);
-            var binomialMatch = row.match(/\|binomial=(.*?)\n/);
-            var imageMatch = row.match(/\|image=(.*?)(?:\s\||\n)/);
-            var rangeMatch = row.match(/\|range=(.*?)(?:\s\||\n)/);
+            const nameMatch = row.match(/\|name=\[\[(.*?)]]/);
+            const binomialMatch = row.match(/\|binomial=(.*?)\n/);
+            const imageMatch = row.match(/\|image=(.*?)(?:\s\||\n)/);
+            const rangeMatch = row.match(/\|range=(.*?)(?:\s\||\n)/);
 
             if (!nameMatch || !binomialMatch) return;
             if (seenBinomials.has(binomialMatch[1])) return;
             seenBinomials.add(binomialMatch[1]);
 
-            var fileName = imageMatch ? imageMatch[1].trim().replace('File:', '') : null;
+            const fileName = imageMatch ? imageMatch[1].trim().replace('File:', '') : null;
 
             // Collecting one promise per row (instead of rendering inside each
             // .then) keeps the array in wikitext/row order; Promise.all below
@@ -24,9 +27,10 @@ export async function extractBears(wikitext) {
         });
     });
 
-    var bears = await Promise.all(bearPromises);
-    var moreBears = document.querySelector('.more_bears');
-    var fragment = document.createDocumentFragment();
+    const bears = await Promise.all(bearPromises);
+    const moreBears = document.querySelector('.more_bears');
+    const fragment = document.createDocumentFragment();
+
     bears.forEach((bear) => {
         fragment.appendChild(renderBearCard(bear));
     });
@@ -57,7 +61,7 @@ async function buildBear(nameMatch, binomialMatch, rangeMatch, filename) {
 function verifyImageLoads(url) {
     if (!url) return Promise.resolve(null);
     return new Promise((resolve) => {
-        var img = new Image();
+        const img = new Image();
         img.onload = () => { resolve(url); };
         img.onerror = () => { resolve(null); };
         img.src = url;
@@ -65,10 +69,10 @@ function verifyImageLoads(url) {
 }
 
 function renderBearCard(bear) {
-    var card = document.createElement('div');
+    const card = document.createElement('div');
     card.className = 'bear';
 
-    var img = document.createElement('img');
+    const img = document.createElement('img');
     img.style.width = '200px';
     img.style.height = 'auto';
 
@@ -77,8 +81,8 @@ function renderBearCard(bear) {
         img.alt = 'Image of ' + bear.name;
         card.appendChild(img);
     } else {
-        var picture = document.createElement('picture');
-        var source = document.createElement('source');
+        const picture = document.createElement('picture');
+        const source = document.createElement('source');
         source.srcset = 'media/placeholder.avif';
         source.type = 'image/avif';
         img.src = 'media/placeholder.jpg';
@@ -88,13 +92,13 @@ function renderBearCard(bear) {
         card.appendChild(picture);
     }
 
-    var name = document.createElement('p');
-    var boldName = document.createElement('b');
+    const name = document.createElement('p');
+    const boldName = document.createElement('b');
     boldName.textContent = bear.name;
     name.appendChild(boldName);
     name.appendChild(document.createTextNode(' (' + bear.binomial + ')'));
 
-    var range = document.createElement('p');
+    const range = document.createElement('p');
     range.textContent = 'Range: ' + bear.range;
 
     card.appendChild(name);
@@ -103,7 +107,7 @@ function renderBearCard(bear) {
 }
 
 async function fetchImageUrl(fileName) {
-    var imageParams = {
+    const imageParams = {
         action: "query",
         titles: "File:" + fileName,
         prop: "imageinfo",
@@ -112,7 +116,7 @@ async function fetchImageUrl(fileName) {
         origin: "*"
     };
 
-    var url = baseUrl + "?" + new URLSearchParams(imageParams).toString();
+    const url = baseUrl + "?" + new URLSearchParams(imageParams).toString();
     const response = await fetch(url);
     if(!response.ok) {
         throw new Error('Image lookup request failed with status ' + response.status);
@@ -123,8 +127,8 @@ async function fetchImageUrl(fileName) {
         throw new Error('Unexpected image lookup response for ' + fileName);
     }
 
-    var pages = data.query.pages;
-    var page = Object.values(pages)[0];
+    const pages = data.query.pages;
+    const page = Object.values(pages)[0];
 
     if (!page || !page.imageinfo || !page.imageinfo[0] || !page.imageinfo[0].url) {
         throw new Error('No image found for ' + fileName);
@@ -132,11 +136,8 @@ async function fetchImageUrl(fileName) {
     return page.imageinfo[0].url;
 }
 
-var baseUrl = "https://en.wikipedia.org/w/api.php";
-var title = "List_of_ursids";
-
 export async function loadBears() {
-    var params = {
+    const params = {
         action: "parse",
         page: title,
         prop: "wikitext",
@@ -170,9 +171,9 @@ export async function loadBears() {
 }
 
 function showBearsError(message) {
-    var moreBears = document.querySelector('.more_bears');
+    const moreBears = document.querySelector('.more_bears');
     if (!moreBears) return;
-    var notice = document.createElement('p');
+    const notice = document.createElement('p');
     notice.className = 'bears-error';
     notice.textContent = message;
     moreBears.appendChild(notice);
