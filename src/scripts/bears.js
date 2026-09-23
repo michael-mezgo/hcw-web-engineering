@@ -83,9 +83,9 @@ function renderBearCard(bear) {
     } else {
         const picture = document.createElement('picture');
         const source = document.createElement('source');
-        source.srcset = 'media/placeholder.avif';
+        source.srcset = '/placeholder.avif';
         source.type = 'image/avif';
-        img.src = 'media/placeholder.jpg';
+        img.src = '/placeholder.jpg';
         img.alt = 'No image available for ' + bear.name;
         picture.appendChild(source);
         picture.appendChild(img);

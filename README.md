@@ -119,7 +119,48 @@ Build the application with ``npm`` and a build and a dependency management tool 
 
 Set up the project with `npm` and a build tool of your choice (for example, Vite or Webpack). Keep source files separate from generated distribution files and commit the package-manager lockfile.
 
+```bash
+npm init -y #use default values
+npm install --save-dev vite #vite only as a dev-dependency
+```
+
+> packege.json changes:
+>   "type": "commonjs" -> "type": "module" #(we are using ES modules)
+>   "main": "index.js" -> deleted #(we are using ES modules, no need for a main entry point=
+
+> Create `src/` directory and move all files into it - change the paths in `index.html` and `bears.js` accordingly:
+```bash
+mkdir src
+git mv scripts/ src/
+git mv media/ public/
+git mv style.css src/
+```
+
+> Add scripts to `package.json`:
+```json
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+```
+
 **Theory question:** Distinguish source, build, distribution, and deployment. What does your build tool do in development and in a production build, and why is the lockfile important for reproducibility?
+
+> #### Source, Build, Distribution, Deployment
+> - Source: The original code written by developers, including HTML, CSS, JavaScript, and other assets.
+> - Build: The process of transforming source code into a format suitable for deployment, which may include bundling, minification, transpilation, and other optimizations.
+> - Distribution: The final output of the build process (`/dist` in this project)
+> - Deployment: Making the distribution available to users (upload it manually or via CI/CD pipeline to a web server)
+> 
+> #### Build Tool Behavior
+> - Development: The build tool serves the application with hot-reloading, allowing developers to see changes in real-time without needing to refresh the browser
+> - Production Build: The build tool optimizes the code for performance, including minification, resulting in a smaller and faster application.
+> 
+> #### Lockfile Importance
+> The lockfile ensures that all developers and CI environments use the same versions of dependencies, preventing unexpected issues caused by version discrepancies and ensuring reproducibility across different environments.
+> **Lockfile vs. package.json**: The lockfile locks the exact versions of dependencies, while `package.json` specifies version ranges. The lockfile ensures that everyone uses the same versions, while `package.json` allows for flexibility in dependency updates.
 
 #### Task 2: Migrate to TypeScript
 
