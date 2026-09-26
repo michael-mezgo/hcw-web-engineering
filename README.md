@@ -227,19 +227,22 @@ Configure ESLint and Prettier using the rulesets below. Resolve all reported err
 > ```
 >
 > ESLint found 287 problems (mostly prettier formatting issues)
-> 
+>
 > ```bash
 > npx prettier --write .
 > ```
-> 
+>
 > Now there are "only" 54 problems left
-> 
+>
 > ```bash
 > npx eslint --fix .
 > ```
 
 **Theory question:** What different problems do a linter, a formatter, and the TypeScript compiler detect? Give one concrete example for each from this project.
 
+> - **Linter**: Findet potentiell fehlerhafte oder riskante Muster im Code. Diese können aber trotzdem syntaktisch korrekt sein. Beispiel: In [bears.ts](src/scripts/bears.ts) habe ich oft gecheckt, ob die Variable nicht `null` oder `undefined` ist, auf leere Stings habe ich jedoch nicht gecheckt. Der Linter hat mich darauf hingewiesen, dass ich die Variable auf leere Strings prüfen sollte, da dies zu unerwartetem Verhalten führen kann. - ESLint Ausgabe: (`181:8 error Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions`)
+> - **Formatter**: Kümmert sich um die einheitliche Formatierung des Codes, wie Einrückungen, Leerzeichen, Zeilenlängen usw. Hat auf die Funktionsweise des Codes keinen Einfluss, dennoch gibt es in Firmen oft verbindliche Styleguides. Beispiel aus dem Projekt: 4 Spaces vs. 2 Spaces Einrückung
+> - **TypeScript Compiler**: Prüft die Typen und die Struktur des Codes (zur Build-Zeit (siehe Aufgabe 2)). Hier hatte ich keinen Fehler mehr, da diese bereits in der vorherigen Aufgabe ausgebessert wurden (`tsc --noEmit`).
 #### Task 4: Provide a consistent command interface
 
 Define the following tasks within `npm scripts`:

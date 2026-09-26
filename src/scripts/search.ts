@@ -1,35 +1,35 @@
 // Search highlighter
-export default function searchBears() {
+export default function searchBears(): void {
   const searchForm = document.querySelector<HTMLFormElement>('.search');
-  if (!searchForm) return;
+  if (searchForm === null) return;
 
   searchForm.addEventListener('submit', function (e) {
     e.preventDefault();
 
     const article = document.querySelector<HTMLElement>('article');
-    if (!article) return;
+    if (article === null) return;
 
     article.querySelectorAll('.highlight').forEach((el) => {
       const parent = el.parentNode;
-      if (!parent) return;
+      if (parent === null) return;
       parent.replaceChild(document.createTextNode(el.textContent ?? ''), el);
       parent.normalize();
     });
 
     const queryField = this.elements.namedItem('q') as HTMLInputElement | null;
     const searchKey = queryField?.value.trim();
-    if (!searchKey) return;
+    if (searchKey === null || searchKey === undefined) return;
 
     const regex = new RegExp(
       '(' + searchKey.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')',
       'gi'
     );
 
-    const walk = (node: ChildNode) => {
+    const walk = (node: ChildNode): void => {
       if (node.nodeType === 3) {
         // Text node
         const match = node.nodeValue?.match(regex);
-        if (match) {
+        if (match !== null && match !== undefined) {
           const span = document.createElement('span');
           span.innerHTML = (node.nodeValue ?? '').replace(
             regex,

@@ -1,15 +1,15 @@
-export default function comments() {
+export default function comments(): void {
   initCommentToggle();
   initCommentForm();
 }
 
-function initCommentToggle() {
+function initCommentToggle(): void {
   // Show/hide comments toggle
   const showHideBtn = document.querySelector<HTMLElement>('.show-hide');
   const commentWrapper =
     document.querySelector<HTMLElement>('.comment-wrapper');
 
-  if (!showHideBtn || !commentWrapper) return;
+  if (showHideBtn === null || commentWrapper === null) return;
 
   commentWrapper.style.display = 'none';
 
@@ -25,14 +25,20 @@ function initCommentToggle() {
   });
 }
 
-function initCommentForm() {
+function initCommentForm(): void {
   // Comment form stuff
   const form = document.querySelector<HTMLFormElement>('.comment-form');
   const nameField = document.querySelector<HTMLInputElement>('#name');
   const commentField = document.querySelector<HTMLTextAreaElement>('#comment');
   const list = document.querySelector<HTMLElement>('.comment-container');
 
-  if (!form || !nameField || !commentField || !list) return;
+  if (
+    form === null ||
+    nameField === null ||
+    commentField === null ||
+    list === null
+  )
+    return;
 
   nameField.addEventListener('input', () => {
     nameField.setCustomValidity('');
@@ -47,9 +53,11 @@ function initCommentForm() {
     const nameValue = nameField.value.trim();
     const commentValue = commentField.value.trim();
 
-    nameField.setCustomValidity(nameValue ? '' : 'Please enter your name.');
+    nameField.setCustomValidity(
+      nameValue !== '' ? '' : 'Please enter your name.'
+    );
     commentField.setCustomValidity(
-      commentValue ? '' : 'Please enter a comment.'
+      commentValue !== '' ? '' : 'Please enter a comment.'
     );
 
     if (!form.reportValidity()) return;

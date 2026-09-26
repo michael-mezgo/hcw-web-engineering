@@ -34,7 +34,7 @@ function isWikiImageLookupResponse(
   return typeof data === 'object' && data !== null;
 }
 
-export async function extractBears(wikitext: string) {
+export async function extractBears(wikitext: string): Promise<void> {
   const speciesTables = wikitext.split('{{Species table/end}}');
   const seenBinomials = new Set<string>();
   const bearPromises: Array<Promise<Bear>> = [];
@@ -54,9 +54,8 @@ export async function extractBears(wikitext: string) {
       seenBinomials.add(binomial);
       const name = nameMatch[1].trim();
 
-      const fileName = imageMatch
-        ? imageMatch[1]?.trim().replace('File:', '')
-        : null;
+      const fileName =
+        imageMatch !== null ? imageMatch[1]?.trim().replace('File:', '') : null;
 
       // Collecting one promise per row (instead of rendering inside each
       // .then) keeps the array in wikitext/row order; Promise.all below
@@ -82,7 +81,7 @@ async function buildBear(
   filename: string | null | undefined
 ): Promise<Bear> {
   let imageUrl = null;
-  if (filename) {
+  if (filename !== null && filename !== undefined && filename !== '') {
     try {
       imageUrl = await verifyImageLoads(await fetchImageUrl(filename));
     } catch (error) {
@@ -102,7 +101,8 @@ async function buildBear(
 // it, so a broken/404 image URL falls back to the placeholder instead of
 // being rendered as a dead <img>.
 async function verifyImageLoads(url: string | null): Promise<string | null> {
-  if (!url) return await Promise.resolve(null);
+  if (url === null || url === undefined || url === '')
+    return await Promise.resolve(null);
   return await new Promise<string | null>((resolve) => {
     const img = new Image();
     img.onload = () => {
@@ -115,7 +115,7 @@ async function verifyImageLoads(url: string | null): Promise<string | null> {
   });
 }
 
-function renderBearCard(bear: Bear) {
+function renderBearCard(bear: Bear): HTMLDivElement {
   const card = document.createElement('div');
   card.className = 'bear';
 
@@ -123,7 +123,7 @@ function renderBearCard(bear: Bear) {
   img.style.width = '200px';
   img.style.height = 'auto';
 
-  if (bear.image) {
+  if (bear.image !== null && bear.image !== undefined && bear.image !== '') {
     img.src = bear.image;
     img.alt = 'Image of ' + bear.name;
     card.appendChild(img);
@@ -172,19 +172,20 @@ async function fetchImageUrl(fileName: string): Promise<string> {
   }
 
   const data: unknown = await response.json();
-  if (!isWikiImageLookupResponse(data) || !data.query?.pages) {
+  if (!isWikiImageLookupResponse(data) || data.query?.pages === undefined) {
     throw new Error('Unexpected image lookup response for ' + fileName);
   }
 
   const page = Object.values(data.query.pages)[0];
+  const imageUrl = page?.imageinfo?.[0]?.url;
 
-  if (!page?.imageinfo?.[0]?.url) {
+  if (imageUrl === undefined || imageUrl === '') {
     throw new Error('No image found for ' + fileName);
   }
-  return page.imageinfo[0].url;
+  return imageUrl;
 }
 
-export async function loadBears() {
+export async function loadBears(): Promise<void> {
   const params = {
     action: 'parse',
     page: title,
@@ -210,14 +211,15 @@ export async function loadBears() {
     if (!isWikiParseResponse(data)) {
       throw new Error('Unexpected bear list response');
     }
-    if (data.error) {
-      throw new Error(data.error.info || 'Wikipedia API returned an error');
+    if (data.error !== undefined) {
+      throw new Error(data.error.info ?? 'Wikipedia API returned an error');
     }
-    if (!data.parse?.wikitext?.['*']) {
+    const wikitext = data.parse?.wikitext?.['*'];
+    if (wikitext === undefined || wikitext === '') {
       throw new Error('Bear list response was missing expected content');
     }
 
-    await extractBears(data.parse.wikitext['*']);
+    await extractBears(wikitext);
   } catch (err) {
     console.error('Failed to load bears:', err);
     showBearsError(
@@ -227,9 +229,9 @@ export async function loadBears() {
   }
 }
 
-function showBearsError(message: string) {
+function showBearsError(message: string): void {
   const moreBears = document.querySelector('.more_bears');
-  if (!moreBears) return;
+  if (moreBears === null) return;
   const notice = document.createElement('p');
   notice.className = 'bears-error';
   notice.textContent = message;
