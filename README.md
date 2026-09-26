@@ -315,3 +315,5 @@ You might have noticed that the base project has a number of accessibility issue
 >
 
 <p>© 2026 Leon Freudenthaler (Hochschule Campus Wien). All rights reversed.</p>
+
+Info: KI für die Formulierung der Theorieantworten verwendet.
