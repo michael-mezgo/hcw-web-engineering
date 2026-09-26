@@ -1,24 +1,26 @@
 # Web Engineering Coding Playground Template
 
-This repository is designed as the foundation for coding playgrounds in the Web Engineering course. It offers a structured space for experimenting with and mastering various web development technologies and practices. 
+This repository is designed as the foundation for coding playgrounds in the Web Engineering course. It offers a structured space for experimenting with and mastering various web development technologies and practices.
 The project is based on [this](https://developer.mozilla.org/en-US/docs/Learn/Accessibility/Accessibility_troubleshooting) repository from MDN.
 
-The project introduces a lot of code smells for you to tackle. 
+The project introduces a lot of code smells for you to tackle.
 **Let's get coding!**
 
 ## Submission Details and Deadlines
-* Coding playgrounds are **individual** work
-* Use this base template to create your project repository.
-* Submit your repository link once.
-* Each playground must be submitted via a new branch in that repository (last commit within deadline will be graded).
-  * Naming conventions of branch: <code>playground-1</code>, <code>playground-2</code>, ...
-* Each playground consists of 5 tasks, 1 point each. A task is complete only when both its implementation work and its theory question have been answered.
+
+- Coding playgrounds are **individual** work
+- Use this base template to create your project repository.
+- Submit your repository link once.
+- Each playground must be submitted via a new branch in that repository (last commit within deadline will be graded).
+  - Naming conventions of branch: <code>playground-1</code>, <code>playground-2</code>, ...
+- Each playground consists of 5 tasks, 1 point each. A task is complete only when both its implementation work and its theory question have been answered.
 
 ### Submission Deadlines
-* [1st Playground](#1-js-playground): 14.09.2026
-* [2nd Playground](#2-dependency--and-build-management-playground): 28.09.2026
-* [3rd Playground](#3-migrate-to-a-frontend-framework): 04.10.2026
-* other Playgrounds TBA by Thomas Berger
+
+- [1st Playground](#1-js-playground): 14.09.2026
+- [2nd Playground](#2-dependency--and-build-management-playground): 28.09.2026
+- [3rd Playground](#3-migrate-to-a-frontend-framework): 04.10.2026
+- other Playgrounds TBA by Thomas Berger
 
 ## Features
 
@@ -28,21 +30,23 @@ The project introduces a lot of code smells for you to tackle.
 - Worst JS coding practices :cold_sweat:
 - No Build and Dependency Management at all :fire:
 
-
 # Coding Playground Description
 
 ## 1. JS Playground
-The provided base project template contains bad coding and templating practices and bugs for you to fix. Take a look into the component files and get a grasp of the inner workings of the provided project. The app should provide the requirements described below. Some are implemented poorly or do not work at all. 
+
+The provided base project template contains bad coding and templating practices and bugs for you to fix. Take a look into the component files and get a grasp of the inner workings of the provided project. The app should provide the requirements described below. Some are implemented poorly or do not work at all.
 
 ### App Requirements
-* On page load the app requests the Wikipedia API to extract bear information from Wikipedia's [list of ursids](https://en.wikipedia.org/wiki/List_of_ursids). The page then renders the provided image, the common name, the scientific name and it's range.
-  * the bears should be ordered in the same order and number (no duplicates) as in the corresponding Wiki page.
-  * if there is no image available, the app should show a placeholder image.
-* Users are able to toggle the comment section.
-* Users are able to leave their name and a comment (both should not be empty).
-* Users are able to search the web page contents using a search query, whereby only the html contents with tag <code>article</code> should be highlighted.
+
+- On page load the app requests the Wikipedia API to extract bear information from Wikipedia's [list of ursids](https://en.wikipedia.org/wiki/List_of_ursids). The page then renders the provided image, the common name, the scientific name and it's range.
+  - the bears should be ordered in the same order and number (no duplicates) as in the corresponding Wiki page.
+  - if there is no image available, the app should show a placeholder image.
+- Users are able to toggle the comment section.
+- Users are able to leave their name and a comment (both should not be empty).
+- Users are able to search the web page contents using a search query, whereby only the html contents with tag <code>article</code> should be highlighted.
 
 ### Tasks
+
 Fix the application code and support them with short code examples where useful.
 
 #### Task 1: Introduce ES modules
@@ -79,18 +83,20 @@ Find and eliminate the remaining bad coding practices. Consider scope, accidenta
 
 > [!NOTE]
 > Missing `#` for a HEX color value in [style.css](style.css). (Removed line - this pink was ugly 😉)
+>
 > ```css
-> div[class="nav"] {
-> height: 50px;
-> background-color: ff80ff;
-> display: flex;
-> padding: 1% 0;
-> margin-bottom: 10px;
+> div[class='nav'] {
+>   height: 50px;
+>   background-color: ff80ff;
+>   display: flex;
+>   padding: 1% 0;
+>   margin-bottom: 10px;
 > }
 > ```
 
 > [!NOTE]
 > No input validation on the comment form in [comments.js](scripts/comments.js) — the app requirement says "both should not be empty", but the original code created a comment from `nameField.value`/`commentField.value` regardless of their content, including empty or whitespace-only input. Fixed by adding `required` to both `<input>` elements in [index.html](index.html) (blocks the native form submit on empty fields) and, in `initCommentForm()`, trimming both values and rejecting whitespace-only input via `setCustomValidity(...)` + `form.reportValidity()`, which also gives the user visible native browser feedback on which field is invalid. Both fields also reset their custom validity on the `input` event, otherwise the browser would keep blocking the form after a failed attempt even once the user corrected the value.
+>
 > ```js
 > nameField.addEventListener('input', () => nameField.setCustomValidity(''));
 > commentField.addEventListener('input', () => commentField.setCustomValidity(''));
@@ -109,9 +115,9 @@ Find and eliminate the remaining bad coding practices. Consider scope, accidenta
 > });
 > ```
 
-
 ## 2. Dependency- and Build Management Playground
-Build the application with ``npm`` and a build and a dependency management tool of your choice (e.g. [Vite](https://vitejs.dev/), [Webpack](https://webpack.js.org/), or others). 
+
+Build the application with `npm` and a build and a dependency management tool of your choice (e.g. [Vite](https://vitejs.dev/), [Webpack](https://webpack.js.org/), or others).
 
 ### Tasks
 
@@ -125,10 +131,11 @@ npm install --save-dev vite #vite only as a dev-dependency
 ```
 
 > packege.json changes:
->   "type": "commonjs" -> "type": "module" #(we are using ES modules)
->   "main": "index.js" -> deleted #(we are using ES modules, no need for a main entry point=
+> "type": "commonjs" -> "type": "module" #(we are using ES modules)
+> "main": "index.js" -> deleted #(we are using ES modules, no need for a main entry point=
 
 > Create `src/` directory and move all files into it - change the paths in `index.html` and `bears.js` accordingly:
+
 ```bash
 mkdir src
 git mv scripts/ src/
@@ -137,6 +144,7 @@ git mv style.css src/
 ```
 
 > Add scripts to `package.json`:
+
 ```json
   "scripts": {
     "dev": "vite",
@@ -149,16 +157,19 @@ git mv style.css src/
 **Theory question:** Distinguish source, build, distribution, and deployment. What does your build tool do in development and in a production build, and why is the lockfile important for reproducibility?
 
 > #### Source, Build, Distribution, Deployment
+>
 > - Source: The original code written by developers, including HTML, CSS, JavaScript, and other assets.
 > - Build: The process of transforming source code into a format suitable for deployment, which may include bundling, minification, transpilation, and other optimizations.
 > - Distribution: The final output of the build process (`/dist` in this project)
 > - Deployment: Making the distribution available to users (upload it manually or via CI/CD pipeline to a web server)
-> 
+>
 > #### Build Tool Behavior
+>
 > - Development: The build tool serves the application with hot-reloading, allowing developers to see changes in real-time without needing to refresh the browser
 > - Production Build: The build tool optimizes the code for performance, including minification, resulting in a smaller and faster application.
-> 
+>
 > #### Lockfile Importance
+>
 > The lockfile ensures that all developers and CI environments use the same versions of dependencies, preventing unexpected issues caused by version discrepancies and ensuring reproducibility across different environments.
 > **Lockfile vs. package.json**: The lockfile locks the exact versions of dependencies, while `package.json` specifies version ranges. The lockfile ensures that everyone uses the same versions, while `package.json` allows for flexibility in dependency updates.
 
@@ -172,21 +183,22 @@ npx tsc --init
 ```
 
 > Changes in `tsconfig.json`:
-> ```json
 >
+> ```json
 > {
->  "compilerOptions": {
->    "module": "esnext", // we are using ES modules
->    "moduleResolution": "bundler", // we are using Vite as a bundler
->    "lib": ["ES2022", "DOM", "DOM.Iterable"], // DOM-APIs
->    // deleted "jsx": "react-jsx"
->    "noEmit": true // transpilation is handled by Vite, so we don't need to emit JS files from TypeScript
->  },
->  "include": ["src/"],
+>   "compilerOptions": {
+>     "module": "esnext", // we are using ES modules
+>     "moduleResolution": "bundler", // we are using Vite as a bundler
+>     "lib": ["ES2022", "DOM", "DOM.Iterable"], // DOM-APIs
+>     // deleted "jsx": "react-jsx"
+>     "noEmit": true // transpilation is handled by Vite, so we don't need to emit JS files from TypeScript
+>   },
+>   "include": ["src/"]
 > }
->```
+> ```
 
 > Rename all `.js` files to `.ts`
+>
 > ```bash
 > git mv src/scripts/main.js src/scripts/main.ts
 > git mv src/scripts/bears.js src/scripts/bears.ts
@@ -197,15 +209,34 @@ npx tsc --init
 **Theory question:** TypeScript uses structural typing and erases types during compilation. Explain both concepts and why a compile-time type alone cannot guarantee the shape of a Wikipedia API response at runtime.
 
 > **Structural Typing**: TypeScript nutzt structural typing, was bedeutet, dass die Kompatibilität von Typen auf der Struktur der Daten basiert, nicht auf den Namen der Typen. Zwei Typen gelten als kompatibel, wenn sie die gleichen Eigenschaften und Methoden haben, unabhängig davon, wie sie benannt sind (z.B. `{ name: string }` ist kompatibel mit `{ name: string, age: number }`, da beide eine `name`-Eigenschaft haben). - Bei Java wird im Gegensatz dazu nominal typing verwendet, bei dem die Typen explizit benannt werden müssen, um kompatibel zu sein.
-> 
+>
 > **Type erasure:** TypeScript-Typen existieren ausschließlich zur Compile-Zeit. Beim Kompilieren zu JavaScript (Vite in meinem Projekt) werden alle Typannotationen, Interfaces und Type-Guards-Signaturen vollständig entfernt — im ausgeführten JS-Code gibt es keine Spur mehr davon. Zur Laufzeit existiert kein Mechanismus, der prüft, ob ein Wert tatsächlich dem deklarierten Typ entspricht; das Typsystem ist zu diesem Zeitpunkt bereits "verschwunden".
-> 
+>
 > **Wikipedia API Response Validation**: Da TypeScript-Typen zur Laufzeit nicht existieren, kann der Compiler nicht garantieren, dass die Daten, die von der Wikipedia-API zurückgegeben werden, tatsächlich dem erwarteten Typ entsprechen. Die API könnte sich ändern, Fehler zurückgeben oder unerwartete Daten liefern. Daher ist es notwendig, die Form der Daten zur Laufzeit zu validieren (z.B. durch Überprüfen von Eigenschaften und Typen), bevor sie als sicherer Typ behandelt werden.
-
 
 #### Task 3: Add static analysis and formatting
 
 Configure ESLint and Prettier using the rulesets below. Resolve all reported errors in the application code and avoid disabling rules without a written justification.
+
+> Installed ESLint v8 (https://eslint.org/docs/v9.x/use/configure/configuration-files-deprecated - newer versions of ESLint use a different configuration file format) - Colleagues reported problems with newer versions
+> Therefore I had to downgrade TypeScript to v5.6
+>
+> ```bash
+> npm install --save-dev eslint@8 eslint-config-standard-with-typescript @typescript-eslint/eslint-plugin @typescript-eslint/parser eslint-plugin-import eslint-plugin-n eslint-plugin-promise eslint-plugin-prettier eslint-config-prettier prettier
+> npm install --save-dev typescript@5.6
+> ```
+>
+> ESLint found 287 problems (mostly prettier formatting issues)
+> 
+> ```bash
+> npx prettier --write .
+> ```
+> 
+> Now there are "only" 54 problems left
+> 
+> ```bash
+> npx eslint --fix .
+> ```
 
 **Theory question:** What different problems do a linter, a formatter, and the TypeScript compiler detect? Give one concrete example for each from this project.
 
@@ -213,12 +244,12 @@ Configure ESLint and Prettier using the rulesets below. Resolve all reported err
 
 Define the following tasks within `npm scripts`:
 
-  * `dev`: starts the development server.
-  * `build`: runs the typescript compiler and bundles your application - bundling depends on your chosen build tool (e.g. Vite, Webpack) but typically bundles multiple files into one, applies optimizations like minification and obfuscation and outputs final results to a `dist` or `build` directory.
-  * `lint`: runs ESLint on all  `.js` and `.ts` files in your projects `/src` directory.
-  * `lint:fix`: runs and also fixes all issues found by ESLint.
-  * `format`: formats all `.js` and `.ts` files in your projects `/src` directory.
-  * `format:check`: checks if the files in the `/src` directory are formatted according to Prettier's rules.
+- `dev`: starts the development server.
+- `build`: runs the typescript compiler and bundles your application - bundling depends on your chosen build tool (e.g. Vite, Webpack) but typically bundles multiple files into one, applies optimizations like minification and obfuscation and outputs final results to a `dist` or `build` directory.
+- `lint`: runs ESLint on all `.js` and `.ts` files in your projects `/src` directory.
+- `lint:fix`: runs and also fixes all issues found by ESLint.
+- `format`: formats all `.js` and `.ts` files in your projects `/src` directory.
+- `format:check`: checks if the files in the `/src` directory are formatted according to Prettier's rules.
 
 The `build`, `lint`, and `format:check` commands must exit with a non-zero status when their checks fail.
 
@@ -230,11 +261,11 @@ Configure a pre-commit hook that checks staged code using [husky](https://typico
 
 **Theory question:** Compare a local pre-commit hook with a CI quality gate. Why is CI still necessary when hooks are configured, and why should CI use non-mutating checks rather than automatically rewriting source files?
 
-
 **ESLint Configurations**
 
 Use ESLint configs [standard-with-typescript](https://www.npmjs.com/package/eslint-config-standard-with-typescript) and [TypeScript ESLint Plugin](https://www.npmjs.com/package/@typescript-eslint/eslint-plugin).
 Your `.eslintrc` file should have the following extensions:
+
 ```.eslintrc.yml
 ...
 extends:
@@ -244,11 +275,12 @@ extends:
   - prettier
 ...
 ```
- 
+
 **Prettier Configurations**
 
 Apply the following ruleset for Prettier:
-``` .prettierrc
+
+```.prettierrc
 {
   "semi": true,
   "singleQuote": true,
@@ -259,6 +291,7 @@ Apply the following ruleset for Prettier:
 ```
 
 ## 3. Migrate to a Frontend Framework
+
 In this playground you will migrate your application to React with TypeScript while retaining the build and quality pipeline from Playground 2.
 
 ### Tasks
@@ -296,23 +329,22 @@ Add at least a list route and a bear-detail route using a stable bear identifier
 ---
 
 ## In-Class Accessibility Workshop
+
 You might have noticed that the base project has a number of accessibility issues - your task is to explore the existing site and fix them. Use the tools presented in our accessibility workshop to test the accessibility of your app and write a summary of your reports below.
 
 ### Tasks
-* Accessibility Checks:
-  * **Color**: Test the current color contrast (text/background), report the results of the test, and then fix them by changing the assigned colors.
-  * **Semantic HTML**: Report on what happens when you try to navigate the page using a screen reader. Fix those navigation issues.
-  * **Audio**: The ``<audio>`` player isn't accessible to hearing impaired people — can you add some kind of accessible alternative for these users?
-  * **Forms**:
-    * The ``<input>`` element in the search form at the top could do with a label, but we don't want to add a visible text label that would potentially spoil the design and isn't really needed by sighted users. Fix this issue by adding a label that is only accessible to screen readers.
-    * The two ``<input>`` elements in the comment form have visible text labels, but they are not unambiguously associated with their labels — how do you achieve this? Note that you'll need to update some of the CSS rule as well.
-  * **Comment Section**: The show/hide comment control button is not currently keyboard-accessible. Can you make it keyboard accessible, both in terms of focusing it using the tab key, and activating it using the return key?
-  * **The table**: The data table is not currently very accessible — it is hard for screen reader users to associate data rows and columns together, and the table also has no kind of summary to make it clear what it shows. Can you add some features to your HTML to fix this problem?
 
+- Accessibility Checks:
+  - **Color**: Test the current color contrast (text/background), report the results of the test, and then fix them by changing the assigned colors.
+  - **Semantic HTML**: Report on what happens when you try to navigate the page using a screen reader. Fix those navigation issues.
+  - **Audio**: The `<audio>` player isn't accessible to hearing impaired people — can you add some kind of accessible alternative for these users?
+  - **Forms**:
+    - The `<input>` element in the search form at the top could do with a label, but we don't want to add a visible text label that would potentially spoil the design and isn't really needed by sighted users. Fix this issue by adding a label that is only accessible to screen readers.
+    - The two `<input>` elements in the comment form have visible text labels, but they are not unambiguously associated with their labels — how do you achieve this? Note that you'll need to update some of the CSS rule as well.
+  - **Comment Section**: The show/hide comment control button is not currently keyboard-accessible. Can you make it keyboard accessible, both in terms of focusing it using the tab key, and activating it using the return key?
+  - **The table**: The data table is not currently very accessible — it is hard for screen reader users to associate data rows and columns together, and the table also has no kind of summary to make it clear what it shows. Can you add some features to your HTML to fix this problem?
 
->
 > _Note your findings here..._
->
 
 <p>© 2026 Leon Freudenthaler (Hochschule Campus Wien). All rights reversed.</p>
 
