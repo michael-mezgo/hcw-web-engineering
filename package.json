@@ -6,6 +6,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "type-check": "tsc --noEmit",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -21,6 +22,7 @@
   },
   "homepage": "https://github.com/michael-mezgo/hcw-web-engineering#readme",
   "devDependencies": {
+    "typescript": "^7.0.2",
     "vite": "^8.3.0"
   }
 }

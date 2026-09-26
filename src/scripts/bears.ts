@@ -1,10 +1,38 @@
 const baseUrl = "https://en.wikipedia.org/w/api.php";
 const title = "List_of_ursids";
 
-export async function extractBears(wikitext) {
+interface Bear {
+    name: string;
+    binomial: string;
+    image: string | null;
+    range: string;
+}
+
+interface WikiParseResponse {
+    error?: { info?: string };
+    parse?: { wikitext?: { '*'?: string } };
+}
+
+function isWikiParseResponse(data: unknown): data is WikiParseResponse {
+    return typeof data === 'object' && data !== null;
+}
+
+interface WikiImageLookupResponse {
+    query?: {
+        pages?: Record<string, {
+            imageinfo?: { url?: string }[];
+        }>;
+    };
+}
+
+function isWikiImageLookupResponse(data: unknown): data is WikiImageLookupResponse {
+    return typeof data === 'object' && data !== null;
+}
+
+export async function extractBears(wikitext: string) {
     const speciesTables = wikitext.split('{{Species table/end}}');
-    const seenBinomials = new Set();
-    const bearPromises = [];
+    const seenBinomials = new Set<string>();
+    const bearPromises: Promise<Bear>[] = [];
 
     speciesTables.forEach((table) => {
         const rows = table.split('{{Species table/row');
@@ -14,16 +42,18 @@ export async function extractBears(wikitext) {
             const imageMatch = row.match(/\|image=(.*?)(?:\s\||\n)/);
             const rangeMatch = row.match(/\|range=(.*?)(?:\s\||\n)/);
 
-            if (!nameMatch || !binomialMatch) return;
-            if (seenBinomials.has(binomialMatch[1])) return;
-            seenBinomials.add(binomialMatch[1]);
+            if (!nameMatch || nameMatch[1] === undefined || !binomialMatch || binomialMatch[1] === undefined) return;
+            const binomial = binomialMatch[1];
+            if (seenBinomials.has(binomial)) return;
+            seenBinomials.add(binomial);
+            const name = nameMatch[1].trim();
 
-            const fileName = imageMatch ? imageMatch[1].trim().replace('File:', '') : null;
+            const fileName = imageMatch ? imageMatch[1]?.trim().replace('File:', '') : null;
 
             // Collecting one promise per row (instead of rendering inside each
             // .then) keeps the array in wikitext/row order; Promise.all below
             // preserves that order regardless of which fetch resolves first.
-            bearPromises.push(buildBear(nameMatch, binomialMatch, rangeMatch, fileName));
+            bearPromises.push(buildBear(name, binomial, rangeMatch, fileName));
         });
     });
 
@@ -34,33 +64,33 @@ export async function extractBears(wikitext) {
     bears.forEach((bear) => {
         fragment.appendChild(renderBearCard(bear));
     });
-    moreBears.appendChild(fragment);
+    moreBears?.appendChild(fragment);
 }
 
-async function buildBear(nameMatch, binomialMatch, rangeMatch, filename) {
+async function buildBear(name: string, binomial: string, rangeMatch: RegExpMatchArray | null, filename: string | null | undefined): Promise<Bear> {
     let imageUrl = null;
     if (filename) {
         try {
             imageUrl = await verifyImageLoads(await fetchImageUrl(filename));
         } catch (error) {
-            console.warn('Could not load image for ' + nameMatch[1] + ':', error);
+            console.warn('Could not load image for ' + name + ':', error);
         }
     }
 
     return {
-        name: nameMatch[1],
-        binomial: binomialMatch[1],
+        name: name,
+        binomial: binomial,
         image: imageUrl,
-        range: rangeMatch ? rangeMatch[1].trim() : "Unknown"
+        range: rangeMatch?.[1]?.trim() ?? "Unknown"
     };
 }
 
 // Confirms the browser can actually decode the image at `url` before we use
 // it, so a broken/404 image URL falls back to the placeholder instead of
 // being rendered as a dead <img>.
-function verifyImageLoads(url) {
+function verifyImageLoads(url: string | null): Promise<string | null> {
     if (!url) return Promise.resolve(null);
-    return new Promise((resolve) => {
+    return new Promise<string | null>((resolve) => {
         const img = new Image();
         img.onload = () => { resolve(url); };
         img.onerror = () => { resolve(null); };
@@ -68,7 +98,7 @@ function verifyImageLoads(url) {
     });
 }
 
-function renderBearCard(bear) {
+function renderBearCard(bear: Bear) {
     const card = document.createElement('div');
     card.className = 'bear';
 
@@ -106,7 +136,7 @@ function renderBearCard(bear) {
     return card;
 }
 
-async function fetchImageUrl(fileName) {
+async function fetchImageUrl(fileName: string): Promise<string> {
     const imageParams = {
         action: "query",
         titles: "File:" + fileName,
@@ -118,17 +148,16 @@ async function fetchImageUrl(fileName) {
 
     const url = baseUrl + "?" + new URLSearchParams(imageParams).toString();
     const response = await fetch(url);
-    if(!response.ok) {
+    if (!response.ok) {
         throw new Error('Image lookup request failed with status ' + response.status);
     }
 
-    const data = await response.json();
-    if (!data.query || !data.query.pages) {
+    const data: unknown = await response.json();
+    if (!isWikiImageLookupResponse(data) || !data.query || !data.query.pages) {
         throw new Error('Unexpected image lookup response for ' + fileName);
     }
 
-    const pages = data.query.pages;
-    const page = Object.values(pages)[0];
+    const page = Object.values(data.query.pages)[0];
 
     if (!page || !page.imageinfo || !page.imageinfo[0] || !page.imageinfo[0].url) {
         throw new Error('No image found for ' + fileName);
@@ -141,7 +170,7 @@ export async function loadBears() {
         action: "parse",
         page: title,
         prop: "wikitext",
-        section: 3,
+        section: "3",
         format: "json",
         origin: "*"
     };
@@ -153,8 +182,11 @@ export async function loadBears() {
             throw new Error('Bear list request failed with status ' + response.status);
         }
 
-        const data = await response.json();
+        const data: unknown = await response.json();
 
+        if (!isWikiParseResponse(data)) {
+            throw new Error('Unexpected bear list response');
+        }
         if (data.error) {
             throw new Error(data.error.info || 'Wikipedia API returned an error');
         }
@@ -170,7 +202,7 @@ export async function loadBears() {
     }
 }
 
-function showBearsError(message) {
+function showBearsError(message: string) {
     const moreBears = document.querySelector('.more_bears');
     if (!moreBears) return;
     const notice = document.createElement('p');

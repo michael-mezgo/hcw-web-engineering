@@ -166,7 +166,42 @@ git mv style.css src/
 
 Use TypeScript as the primary development language and adapt the source files and configuration accordingly. Enable strict checking, model the application's domain data, and validate data received from external APIs before treating it as a typed value.
 
+```bash
+npm install --save-dev typescript
+npx tsc --init
+```
+
+> Changes in `tsconfig.json`:
+> ```json
+>
+> {
+>  "compilerOptions": {
+>    "module": "esnext", // we are using ES modules
+>    "moduleResolution": "bundler", // we are using Vite as a bundler
+>    "lib": ["ES2022", "DOM", "DOM.Iterable"], // DOM-APIs
+>    // deleted "jsx": "react-jsx"
+>    "noEmit": true // transpilation is handled by Vite, so we don't need to emit JS files from TypeScript
+>  },
+>  "include": ["src/"],
+> }
+>```
+
+> Rename all `.js` files to `.ts`
+> ```bash
+> git mv src/scripts/main.js src/scripts/main.ts
+> git mv src/scripts/bears.js src/scripts/bears.ts
+> git mv src/scripts/comments.js src/scripts/comments.ts
+> git mv src/scripts/search.js src/scripts/search.ts
+> ```
+
 **Theory question:** TypeScript uses structural typing and erases types during compilation. Explain both concepts and why a compile-time type alone cannot guarantee the shape of a Wikipedia API response at runtime.
+
+> **Structural Typing**: TypeScript nutzt structural typing, was bedeutet, dass die Kompatibilität von Typen auf der Struktur der Daten basiert, nicht auf den Namen der Typen. Zwei Typen gelten als kompatibel, wenn sie die gleichen Eigenschaften und Methoden haben, unabhängig davon, wie sie benannt sind (z.B. `{ name: string }` ist kompatibel mit `{ name: string, age: number }`, da beide eine `name`-Eigenschaft haben). - Bei Java wird im Gegensatz dazu nominal typing verwendet, bei dem die Typen explizit benannt werden müssen, um kompatibel zu sein.
+> 
+> **Type erasure:** TypeScript-Typen existieren ausschließlich zur Compile-Zeit. Beim Kompilieren zu JavaScript (Vite in meinem Projekt) werden alle Typannotationen, Interfaces und Type-Guards-Signaturen vollständig entfernt — im ausgeführten JS-Code gibt es keine Spur mehr davon. Zur Laufzeit existiert kein Mechanismus, der prüft, ob ein Wert tatsächlich dem deklarierten Typ entspricht; das Typsystem ist zu diesem Zeitpunkt bereits "verschwunden".
+> 
+> **Wikipedia API Response Validation**: Da TypeScript-Typen zur Laufzeit nicht existieren, kann der Compiler nicht garantieren, dass die Daten, die von der Wikipedia-API zurückgegeben werden, tatsächlich dem erwarteten Typ entsprechen. Die API könnte sich ändern, Fehler zurückgeben oder unerwartete Daten liefern. Daher ist es notwendig, die Form der Daten zur Laufzeit zu validieren (z.B. durch Überprüfen von Eigenschaften und Typen), bevor sie als sicherer Typ behandelt werden.
+
 
 #### Task 3: Add static analysis and formatting
 
