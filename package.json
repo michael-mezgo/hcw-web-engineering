@@ -4,9 +4,13 @@
   "description": "This repository is designed as the foundation for coding playgrounds in the Web Engineering course. It offers a structured space for experimenting with and mastering various web development technologies and practices.  The project is based on [this](https://developer.mozilla.org/en-US/docs/Learn/Accessibility/Accessibility_troubleshooting) repository from MDN.",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "type-check": "tsc --noEmit",
+    "lint": "eslint src --ext .js,.ts",
+    "lint:fix": "eslint src --ext .js,.ts --fix",
+    "format": "prettier --write \"src/**/*.{js,ts}\"",
+    "format:check": "prettier --check \"src/**/*.{js,ts}\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

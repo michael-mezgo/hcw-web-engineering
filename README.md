@@ -258,6 +258,14 @@ The `build`, `lint`, and `format:check` commands must exit with a non-zero statu
 
 **Theory question:** Why are stable, composable commands such as these useful as an interface for developers and CI? Explain idempotence and identify which of your scripts should be idempotent.
 
+> - **Stable, Composable Commands**: Ein einheitliches Befehlsset bildet eine stabile Schnittstelle. So finden sich Entwickler auch in anderen Projekten schnell zurecht. Zudem ist es für die einfache Verwendung egal, welches Tool in welcher Version genau dahinter steckt - der Aufruf bleibt gleich.
+> - **Idempotence**: Ein idempotenter Befehl kann beliebig oft ausgeführt werden, ohne dass sich das Ergebnis ändert. ("Mehrfaches Ausführen mit demselben Input führt zum selben Endzustand wie einmaliges Ausführen.")
+>   - Projekt-spezifische Beispiele:
+>     - `format` und `lint:fix` sind idempotent. Wenn sie einmal ausgeführt wurden, ändert sich das Ergebnis nicht mehr auch wenn sie wieder ausgeführt werden.
+>     - `lint` und `format:check` sind read-only. Daher auch idempotent (vgl. HTTP-GET). Sie geben immer das gleiche Ergebnis zurück (bei selbem Input-Code)
+>     - `build` grundsätzlich auch idempotent - kommt allerdings auch darauf an, wie z.B. die minification funktioniert
+>     - `dev` ist nicht idempotent, da es einen Server startet und dieser beim zweiten Aufruf bereits läuft und daher fehlschlägt
+
 #### Task 5: Enforce quality before integration
 
 Configure a pre-commit hook that checks staged code using [husky](https://typicode.github.io/husky/) and [lint-staged](https://github.com/lint-staged/lint-staged). Configure a continuous-integration workflow that installs dependencies from the lockfile and runs the non-mutating build, type, lint, and formatting checks for every push or pull request.
