@@ -270,7 +270,18 @@ The `build`, `lint`, and `format:check` commands must exit with a non-zero statu
 
 Configure a pre-commit hook that checks staged code using [husky](https://typicode.github.io/husky/) and [lint-staged](https://github.com/lint-staged/lint-staged). Configure a continuous-integration workflow that installs dependencies from the lockfile and runs the non-mutating build, type, lint, and formatting checks for every push or pull request.
 
+> ```bash
+> npm install --save-dev husky lint-staged
+> npx husky init
+> chmod +x .husky/pre-commit
+> ```
 **Theory question:** Compare a local pre-commit hook with a CI quality gate. Why is CI still necessary when hooks are configured, and why should CI use non-mutating checks rather than automatically rewriting source files?
+
+> - **Hook**: Läuft am Rechner des Entwicklers, bevor ein Commit erstellt wird. Es kann den Commit blockieren, wenn die Checks fehlschlagen. Vorteil: Entwickler erhalten sofortiges Feedback und können Probleme direkt beheben, daher weniger Commits mit "Fix xy". Nachteil: Hooks sind lokal und können umgangen oder deaktiviert werden.
+> - **CI Quality Gate**: Läuft auf einem zentralen Server (z.B. GitHub Actions) und prüft den Code, bevor er in den Hauptbranch integriert wird. Vorteil: Alle Commits werden überprüft, unabhängig davon, ob der Entwickler Hooks deaktiviert hat. Es gibt auch im Nachhinein nicht die Ausrede "bei mir hat es funktioniert".  Nachteil: Feedback kommt erst nach dem Push, daher kann es zu mehr "Fix xy"-Commits kommen.
+>
+> **Warum CI trotz Hook?**: Warum CI trotz Hook? - Siehe oben Nachteile von Hooks.
+> **CI non-mutating checks**: CI sollte keine Änderungen am Code vornehmen, da dies zu unerwarteten Änderungen führen kann, die der Entwickler nicht beabsichtigt hat. Zudem ist es ein Sicherheitsrisiko: CI braucht Schreibrechte am Repo. Stattdessen sollte CI nur prüfen, ob der Code den Standards entspricht und Fehler melden, damit der Entwickler diese selbst beheben kann. - **Non mutating** checks haben auch den Vorteil, dass sie immer reproduzierbar sind.
 
 **ESLint Configurations**
 
