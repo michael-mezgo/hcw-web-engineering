@@ -347,17 +347,33 @@ Decompose the interface into components organised by feature. Use props where ap
 
 **Theory question:** Explain how component boundaries and typed props act as contracts. What makes a key stable, why does React need keys during reconciliation, and why is an array index unsuitable when list entries can change order?
 
+> Eine Komponente ist eine abgeschlossene Einheit, die eine bestimmte Funktionalität kapselt. Sie hat klar definierte Eingaben (Props) und Ausgaben (Render-Ergebnis). Props sind wie Parameter für Funktionen: Sie geben der Komponente die Daten, die sie benötigt, um korrekt zu rendern. Typisierte Props stellen sicher, dass die Daten, die an eine Komponente übergeben werden, den erwarteten Typen entsprechen. Dies wirkt wie ein Vertrag zwischen der Komponente und ihrem Aufrufer: Wenn der Vertrag verletzt wird (z.B. falscher Typ), kann TypeScript einen Fehler melden.
+> Dies hält das Single-Responsibility-Prinzip ein, da jede Komponente nur für ihre eigene Logik verantwortlich ist. So ist es z.B. der Bear-List egal woher die Daten kommen, solange sie in der richtigen Form (Props) übergeben werden.
+> 
+> **Stable Keys**: Stabiler Key - referenziert Listeneintrag eindeutig und bleibt über mehrere Renders hinweg gleich - unabhängig von Reihenfolge oder Filterung. React verwendet Keys, um Listeneinträge effizient zu aktualisieren. Wenn ein Key sich ändert, denkt React, dass es sich um einen neuen Eintrag handelt, und entfernt den alten Eintrag aus dem DOM und fügt den neuen hinzu. Dies kann zu unnötigen DOM-Operationen führen und den Zustand von Komponenten verlieren.
+> Wir nutzen einen Slug aus dem eindeutigen Bären-Namen als Key, da dieser stabil ist. Ein Array-Index wäre ungeeignet, da sich die Reihenfolge der Bären ändern kann (z.B. durch Filterung oder Sortierung).
+
 #### Task 3: Model state and interaction
 
 Implement the comment toggle, comment form, and search behavior with React events and state. Use controlled inputs, immutable updates, and derived values rather than duplicate state. Lift state only to the closest common owner that needs it.
 
 **Theory question:** Distinguish props, stored state, and derived values. Explain why direct mutation can produce incorrect React behavior and when lifting state is preferable to introducing context.
 
+> - **Props:** Props sind schreibgeschützte Eingaben, die von einer übergeordneten Komponente an eine untergeordnete Komponente übergeben werden. Sie dienen dazu, Daten und Funktionen weiterzugeben.
+> - **Stored State:** Stored State ist der interne Zustand einer Komponente. Dieser kann sich ändern -> Re-Render der Komponente.
+> - **Derived Values:** Derived Values sind Werte, die aus Props und/oder Stored State berechnet werden. Sie werden nicht direkt gespeichert, sondern bei jedem Render neu berechnet (z.B. Button "Hide Comments" vs. "Show Comments" - abhängig vom State `isOpen`).
+> 
+> **Direct Mutation:** Wenn man den State direkt mutiert (z.B. `state.value = newValue`), erkennt React die Änderung nicht, da es auf Referenzänderungen achtet. Dies kann dazu führen, dass die Komponente nicht neu gerendert wird und der UI-Zustand inkonsistent wird.
+> 
+> **Lifting vs. Context**: Lifting State bedeutet, den State in die nächsthöhere gemeinsame Komponente zu verschieben, sodass mehrere untergeordnete Komponenten darauf zugreifen können. / Context ist nützlich, wenn viele, tief verschachtelte Komponenten auf denselben State zugreifen müssen und das durchreichen als Props unpraktisch wird. Beispiel: Suchbegriff
+
 #### Task 4: Load and represent remote data
 
 Load and validate the bear data within the React application. Represent loading, success, empty, and error states explicitly; prevent stale requests from overwriting newer results; and retain the image fallback behavior from Playground 1.
 
 **Theory question:** Why is fetching data a synchronization with an external system rather than part of pure rendering? Explain how cleanup or cancellation prevents race conditions when a component unmounts or a request becomes irrelevant.
+
+> 
 
 #### Task 5: Add client-side routing and verify the migration
 
@@ -366,8 +382,10 @@ Add at least a list route and a bear-detail route using a stable bear identifier
 > ```bash
 > npm install react-router-dom
 > ```
-> 
+
 **Theory question:** Distinguish client-side rendering, a single-page application, and client-side routing. Compare route parameters with query parameters, and describe one benefit and one cost of the SPA architecture used here.
+
+> 
 
 ---
 
