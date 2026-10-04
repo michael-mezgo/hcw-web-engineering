@@ -322,7 +322,24 @@ In this playground you will migrate your application to React with TypeScript wh
 
 Add React (or another framework of your choice) to the existing Vite and TypeScript project and migrate the page entry point to a React root. Preserve the build, linting, formatting, and CI setup from Playground 2, adapting scripts and configuration where necessary.
 
+> ```bash
+> npm install react react-dom 
+> npm install --save-dev @types/react @types/react-dom @vitejs/plugin-react
+> ```
+
 **Theory question:** Contrast imperative DOM updates with React's declarative model. What happens during React's render, reconciliation, and commit phases, and why should code outside React not modify DOM nodes owned by the React root? If you chose not to use React, answer the same questions in the context of your chosen framework.
+
+> **Imparativ**: Sagt, _wie_ sich das DOM ändert. Beispiele: `createElement`, `appendChild`. Das hat den Nachteil, dass man sich selbst darum kümmern muss. Bei jeder Interaktion kommen neue Fälle dazu, die man berücksichtigen muss. Das ist eine Fehlerquelle (vergessene Updates, doppelte Einträge, ...).
+> **Deklarativ**: Sagt, _was_ das DOM darstellen soll. React kümmert sich darum, dass das DOM immer den aktuellen Zustand der Anwendung widerspiegelt. Man beschreibt nur, wie die UI aussehen soll, und React kümmert sich um die Details der Aktualisierung.
+> 
+> **Die 3 Phasen von React**:
+> 1. **Render**: Wird in 2 Fällen aufgerufen: initial Render und State Änderungen. React erstellt einen Virtual DOM basierend auf den Komponenten und deren Props/State.
+> 2. **Reconciliation**: React vergleicht den neuen Virtual DOM mit dem alten (Diffing). Es entscheidet, welche Teile des echten DOM aktualisiert werden müssen.
+> 3. **Commit**: React wendet die Änderungen am echten DOM an. Danach laufen `useLayoutEffect` und `useEffect`. Nur in dieser Phase wird das echte DOM verändert.
+>
+> **Warum sollte Code außerhalb von React das DOM nicht verändern?**: Wenn Code außerhalb von React das DOM verändert, kann React diese Änderungen nicht erkennen. Bei der nächsten Reconciliation könnte React die Änderungen überschreiben, da es den Zustand des Virtual DOMs als Quelle der Wahrheit betrachtet. Dies kann zu unerwartetem Verhalten führen.
+> 
+> [Quelle](https://medium.com/@mukeshsharma20120/understanding-reacts-render-reconciliation-diffing-commit-phases-63913e775d8d)
 
 #### Task 2: Design the component tree
 

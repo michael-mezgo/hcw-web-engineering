@@ -9,6 +9,7 @@
     // See also https://aka.ms/tsconfig/module
     "module": "ESNext",
     "target": "esnext",
+    "jsx": "react-jsx",
     "types": [],
     // For nodejs:
     // "lib": ["esnext"],
