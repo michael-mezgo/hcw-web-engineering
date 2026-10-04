@@ -1,25 +1,21 @@
-import { useState, type JSX } from 'react';
-import Article from './features/article/Article';
-import Footer from './features/layout/Footer';
-import Header from './features/layout/Header';
-import Nav from './features/layout/Nav';
-import Sidebar from './features/layout/Sidebar';
-import { SearchQueryContext } from './features/search/SearchContext';
+import type { JSX } from 'react';
+import { Route, Routes } from 'react-router-dom';
+import { BearsProvider } from './features/bears/BearsContext';
+import AppLayout from './features/layout/AppLayout';
+import BearDetailPage from './pages/BearDetailPage';
+import HomePage from './pages/HomePage';
+import NotFoundPage from './pages/NotFoundPage';
 
 export default function App(): JSX.Element {
-  const [query, setQuery] = useState('');
-
   return (
-    <>
-      <Header />
-      <Nav onSearch={setQuery} />
-      <main>
-        <SearchQueryContext value={query}>
-          <Article />
-        </SearchQueryContext>
-        <Sidebar />
-      </main>
-      <Footer />
-    </>
+    <BearsProvider>
+      <Routes>
+        <Route element={<AppLayout />}>
+          <Route index element={<HomePage />} />
+          <Route path="bears/:id" element={<BearDetailPage />} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Route>
+      </Routes>
+    </BearsProvider>
   );
 }

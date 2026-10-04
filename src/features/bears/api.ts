@@ -116,6 +116,14 @@ async function extractBears(
   return await Promise.all(bearPromises);
 }
 
+// URL-safe identifier: "Ursus arctos" -> "ursus-arctos".
+function toSlug(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 async function buildBear(
   name: string,
   binomial: string,
@@ -134,6 +142,7 @@ async function buildBear(
   }
 
   return {
+    id: toSlug(binomial),
     name,
     binomial,
     image: imageUrl,

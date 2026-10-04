@@ -1,11 +1,15 @@
 import { useState, type FormEvent, type JSX } from 'react';
 
 interface SearchBarProps {
+  initialValue: string;
   onSearch: (query: string) => void;
 }
 
-export default function SearchBar({ onSearch }: SearchBarProps): JSX.Element {
-  const [value, setValue] = useState('');
+export default function SearchBar({
+  initialValue,
+  onSearch,
+}: SearchBarProps): JSX.Element {
+  const [value, setValue] = useState(initialValue);
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>): void => {
     event.preventDefault();

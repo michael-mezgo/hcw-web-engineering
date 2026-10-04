@@ -10,7 +10,7 @@ export default function BearList({ bears }: BearListProps): JSX.Element {
   return (
     <>
       {bears.map((bear) => (
-        <BearCard key={bear.binomial} bear={bear} />
+        <BearCard key={bear.id} bear={bear} />
       ))}
     </>
   );

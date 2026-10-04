@@ -2,10 +2,11 @@ import type { JSX } from 'react';
 import SearchBar from '../search/SearchBar';
 
 interface NavProps {
+  query: string;
   onSearch: (query: string) => void;
 }
 
-export default function Nav({ onSearch }: NavProps): JSX.Element {
+export default function Nav({ query, onSearch }: NavProps): JSX.Element {
   return (
     <div className="nav">
       <ul>
@@ -23,7 +24,8 @@ export default function Nav({ onSearch }: NavProps): JSX.Element {
         </li>
       </ul>
 
-      <SearchBar onSearch={onSearch} />
+      {/* key resets the input when the query in the URL changes */}
+      <SearchBar key={query} initialValue={query} onSearch={onSearch} />
     </div>
   );
 }

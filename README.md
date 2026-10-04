@@ -363,6 +363,10 @@ Load and validate the bear data within the React application. Represent loading,
 
 Add at least a list route and a bear-detail route using a stable bear identifier as a route parameter. Use query parameters for optional search/filter view state where appropriate. Verify that every requirement from Playground 1 still works and that all Playground 2 quality commands pass.
 
+> ```bash
+> npm install react-router-dom
+> ```
+> 
 **Theory question:** Distinguish client-side rendering, a single-page application, and client-side routing. Compare route parameters with query parameters, and describe one benefit and one cost of the SPA architecture used here.
 
 ---

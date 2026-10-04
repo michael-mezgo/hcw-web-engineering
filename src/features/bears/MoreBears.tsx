@@ -1,7 +1,8 @@
 import type { JSX } from 'react';
 import Highlight from '../search/Highlight';
 import BearList from './BearList';
-import { useBears, type BearsState } from './useBears';
+import { useBearsState } from './BearsContext';
+import type { BearsState } from './useBears';
 
 function renderBears(state: BearsState): JSX.Element {
   switch (state.status) {
@@ -21,7 +22,7 @@ function renderBears(state: BearsState): JSX.Element {
 }
 
 export default function MoreBears(): JSX.Element {
-  const state = useBears();
+  const state = useBearsState();
 
   return (
     <section className="more_bears">

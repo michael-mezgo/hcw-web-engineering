@@ -1,5 +1,7 @@
 import type { JSX } from 'react';
+import { Link } from 'react-router-dom';
 import Highlight from '../search/Highlight';
+import BearImage from './BearImage';
 import type { Bear } from './types';
 
 interface BearCardProps {
@@ -7,29 +9,14 @@ interface BearCardProps {
 }
 
 export default function BearCard({ bear }: BearCardProps): JSX.Element {
-  const imageStyle = { width: '200px', height: 'auto' };
-
   return (
     <div className="bear">
-      {bear.image !== null && bear.image !== '' ? (
-        <img
-          src={bear.image}
-          alt={`Image of ${bear.name}`}
-          style={imageStyle}
-        />
-      ) : (
-        <picture>
-          <source srcSet="/placeholder.avif" type="image/avif" />
-          <img
-            src="/placeholder.jpg"
-            alt={`No image available for ${bear.name}`}
-            style={imageStyle}
-          />
-        </picture>
-      )}
+      <BearImage bear={bear} />
       <p>
         <b>
-          <Highlight text={bear.name} />
+          <Link to={`/bears/${bear.id}`}>
+            <Highlight text={bear.name} />
+          </Link>
         </b>{' '}
         (<Highlight text={bear.binomial} />)
       </p>
