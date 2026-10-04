@@ -1,7 +1,11 @@
 import type { JSX } from 'react';
 import SearchBar from '../search/SearchBar';
 
-export default function Nav(): JSX.Element {
+interface NavProps {
+  onSearch: (query: string) => void;
+}
+
+export default function Nav({ onSearch }: NavProps): JSX.Element {
   return (
     <div className="nav">
       <ul>
@@ -19,7 +23,7 @@ export default function Nav(): JSX.Element {
         </li>
       </ul>
 
-      <SearchBar />
+      <SearchBar onSearch={onSearch} />
     </div>
   );
 }

@@ -1,34 +1,71 @@
 import type { JSX } from 'react';
+import Highlight from '../search/Highlight';
 
 export default function BearTypesTable(): JSX.Element {
   return (
     <table>
       <thead>
         <tr>
-          <td>Bear Type</td>
-          <td>Coat</td>
-          <td>Adult size</td>
-          <td>Habitat</td>
-          <td>Lifespan</td>
-          <td>Diet</td>
+          <td>
+            <Highlight text="Bear Type" />
+          </td>
+          <td>
+            <Highlight text="Coat" />
+          </td>
+          <td>
+            <Highlight text="Adult size" />
+          </td>
+          <td>
+            <Highlight text="Habitat" />
+          </td>
+          <td>
+            <Highlight text="Lifespan" />
+          </td>
+          <td>
+            <Highlight text="Diet" />
+          </td>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <td>Wild</td>
-          <td>Brown or black</td>
-          <td>1.4 to 2.8 meters</td>
-          <td>Woods and forests</td>
-          <td>25 to 28 years</td>
-          <td>Fish, meat, plants</td>
+          <td>
+            <Highlight text="Wild" />
+          </td>
+          <td>
+            <Highlight text="Brown or black" />
+          </td>
+          <td>
+            <Highlight text="1.4 to 2.8 meters" />
+          </td>
+          <td>
+            <Highlight text="Woods and forests" />
+          </td>
+          <td>
+            <Highlight text="25 to 28 years" />
+          </td>
+          <td>
+            <Highlight text="Fish, meat, plants" />
+          </td>
         </tr>
         <tr>
-          <td>Urban</td>
-          <td>North Face</td>
-          <td>18 to 22</td>
-          <td>Condos and coffee shops</td>
-          <td>20 to 32 years</td>
-          <td>Starbucks, sushi</td>
+          <td>
+            <Highlight text="Urban" />
+          </td>
+          <td>
+            <Highlight text="North Face" />
+          </td>
+          <td>
+            <Highlight text="18 to 22" />
+          </td>
+          <td>
+            <Highlight text="Condos and coffee shops" />
+          </td>
+          <td>
+            <Highlight text="20 to 32 years" />
+          </td>
+          <td>
+            <Highlight text="Starbucks, sushi" />
+          </td>
         </tr>
       </tbody>
     </table>

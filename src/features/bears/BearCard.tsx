@@ -1,4 +1,5 @@
 import type { JSX } from 'react';
+import Highlight from '../search/Highlight';
 import type { Bear } from './types';
 
 interface BearCardProps {
@@ -27,9 +28,14 @@ export default function BearCard({ bear }: BearCardProps): JSX.Element {
         </picture>
       )}
       <p>
-        <b>{bear.name}</b> ({bear.binomial})
+        <b>
+          <Highlight text={bear.name} />
+        </b>{' '}
+        (<Highlight text={bear.binomial} />)
       </p>
-      <p>Range: {bear.range}</p>
+      <p>
+        <Highlight text={`Range: ${bear.range}`} />
+      </p>
     </div>
   );
 }

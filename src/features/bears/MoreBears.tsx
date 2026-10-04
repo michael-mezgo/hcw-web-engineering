@@ -1,4 +1,5 @@
 import type { JSX } from 'react';
+import Highlight from '../search/Highlight';
 import BearList from './BearList';
 import type { Bear } from './types';
 
@@ -21,7 +22,9 @@ const testBears: Bear[] = [
 export default function MoreBears(): JSX.Element {
   return (
     <section className="more_bears">
-      <h3>More Bears</h3>
+      <h3>
+        <Highlight text="More Bears" />
+      </h3>
       <BearList bears={testBears} />
     </section>
   );

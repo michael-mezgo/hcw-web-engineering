@@ -1,48 +1,45 @@
-import type { JSX } from 'react';
+import { useState, type JSX } from 'react';
+import CommentForm from './CommentForm';
+import CommentList from './CommentList';
+import type { Comment } from './types';
+
+const initialComments: Comment[] = [
+  {
+    id: 'initial-bob-fossil',
+    name: 'Bob Fossil',
+    text: 'Oh I am so glad you taught me all about the big brown angry guys...',
+  },
+];
 
 export default function CommentSection(): JSX.Element {
+  const [isOpen, setIsOpen] = useState(false);
+  const [comments, setComments] = useState<Comment[]>(initialComments);
+
+  const addComment = (name: string, text: string): void => {
+    setComments((prev) => [...prev, { id: crypto.randomUUID(), name, text }]);
+  };
+
   return (
     <section className="comments">
-      <div className="show-hide">Show comment</div>
+      <button
+        type="button"
+        className="show-hide"
+        aria-expanded={isOpen}
+        onClick={() => {
+          setIsOpen((prev) => !prev);
+        }}
+      >
+        {isOpen ? 'Hide comments' : 'Show comments'}
+      </button>
 
-      <div className="comment-wrapper">
-        <h3>Add comment</h3>
-        <form className="comment-form">
-          <div className="flex-pair">
-            Your name:
-            <input
-              type="text"
-              name="name"
-              id="name"
-              placeholder="Enter your name"
-              required
-            />
-          </div>
-          <div className="flex-pair">
-            Your comment:
-            <input
-              type="text"
-              name="comment"
-              id="comment"
-              placeholder="Enter your comment"
-              required
-            />
-          </div>
-          <div>
-            <input type="submit" value="Submit comment" />
-          </div>
-        </form>
-        <h3>Comments</h3>
-        <ul className="comment-container">
-          <li>
-            <p>Bob Fossil</p>
-            <p>
-              Oh I am so glad you taught me all about the big brown angry
-              guys...
-            </p>
-          </li>
-        </ul>
-      </div>
+      {isOpen && (
+        <div className="comment-wrapper">
+          <h3>Add comment</h3>
+          <CommentForm onAdd={addComment} />
+          <h3>Comments</h3>
+          <CommentList comments={comments} />
+        </div>
+      )}
     </section>
   );
 }

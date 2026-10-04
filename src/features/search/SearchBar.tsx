@@ -1,9 +1,28 @@
-import type { JSX } from 'react';
+import { useState, type FormEvent, type JSX } from 'react';
 
-export default function SearchBar(): JSX.Element {
+interface SearchBarProps {
+  onSearch: (query: string) => void;
+}
+
+export default function SearchBar({ onSearch }: SearchBarProps): JSX.Element {
+  const [value, setValue] = useState('');
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>): void => {
+    event.preventDefault();
+    onSearch(value.trim());
+  };
+
   return (
-    <form className="search">
-      <input type="search" name="q" placeholder="Search query" />
+    <form className="search" onSubmit={handleSubmit}>
+      <input
+        type="search"
+        name="q"
+        placeholder="Search query"
+        value={value}
+        onChange={(event) => {
+          setValue(event.target.value);
+        }}
+      />
       <input type="submit" value="Go!" />
     </form>
   );
