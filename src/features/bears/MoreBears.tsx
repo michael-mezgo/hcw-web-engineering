@@ -1,31 +1,34 @@
 import type { JSX } from 'react';
 import Highlight from '../search/Highlight';
 import BearList from './BearList';
-import type { Bear } from './types';
+import { useBears, type BearsState } from './useBears';
 
-// Temporary test data until the bears are loaded from the Wikipedia API.
-const testBears: Bear[] = [
-  {
-    name: 'Brown bear',
-    binomial: 'Ursus arctos',
-    image: '/wild-bear.jpg',
-    range: 'Europe, Asia and North America',
-  },
-  {
-    name: 'Sun bear',
-    binomial: 'Helarctos malayanus',
-    image: null,
-    range: 'Southeast Asia',
-  },
-];
+function renderBears(state: BearsState): JSX.Element {
+  switch (state.status) {
+    case 'loading':
+      return <p role="status">Loading bears…</p>;
+    case 'success':
+      return <BearList bears={state.bears} />;
+    case 'empty':
+      return <p>No bears found.</p>;
+    case 'error':
+      return (
+        <p className="bears-error" role="alert">
+          {state.message}
+        </p>
+      );
+  }
+}
 
 export default function MoreBears(): JSX.Element {
+  const state = useBears();
+
   return (
     <section className="more_bears">
       <h3>
         <Highlight text="More Bears" />
       </h3>
-      <BearList bears={testBears} />
+      {renderBears(state)}
     </section>
   );
 }
