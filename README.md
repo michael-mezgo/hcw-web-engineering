@@ -334,7 +334,7 @@ Add React (or another framework of your choice) to the existing Vite and TypeScr
 > 
 > **Die 3 Phasen von React**:
 > 1. **Render**: Wird in 2 Fällen aufgerufen: initial Render und State Änderungen. React erstellt einen Virtual DOM basierend auf den Komponenten und deren Props/State.
-> 2. **Reconciliation**: React vergleicht den neuen Virtual DOM mit dem alten (Diffing). Es entscheidet, welche Teile des echten DOM aktualisiert werden müssen.
+> 2. **Reconciliation**: React vergleicht den neuen Virtual DOM mit dem DOM. Es entscheidet, welche Teile des echten DOM aktualisiert werden müssen.
 > 3. **Commit**: React wendet die Änderungen am echten DOM an. Danach laufen `useLayoutEffect` und `useEffect`. Nur in dieser Phase wird das echte DOM verändert.
 >
 > **Warum sollte Code außerhalb von React das DOM nicht verändern?**: Wenn Code außerhalb von React das DOM verändert, kann React diese Änderungen nicht erkennen. Bei der nächsten Reconciliation könnte React die Änderungen überschreiben, da es den Zustand des Virtual DOMs als Quelle der Wahrheit betrachtet. Dies kann zu unerwartetem Verhalten führen.
