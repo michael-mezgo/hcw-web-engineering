@@ -14,17 +14,20 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
 
-      - name: Install dependencies
+      - name: Install dependencies (from lockfile)
         run: npm ci
 
-      - name: Check formatting
+      - name: Check formatting (web + api)
         run: npm run format:check
 
-      - name: Lint
+      - name: Lint (web + api)
         run: npm run lint
 
-      - name: Build (includes type-check)
+      - name: Type-check (web + api)
+        run: npm run typecheck
+
+      - name: Build (web + api)
         run: npm run build
