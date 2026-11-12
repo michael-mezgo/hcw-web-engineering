@@ -416,6 +416,29 @@ Implement `GET /api/bears` and `GET /api/bears/:id`. The API fetches the "List o
 
 **Theory question:** What is a Backend for Frontend, and what moves from the browser to the server when you introduce one (shape of the data, secrets, headers, CORS, failure handling)? Why is an empty 200 on upstream failure worse than a 502?
 
+> **Answer:**
+>
+> **Backend for Frontend (BFF)**: Ein BFF ist ein eigener, kleiner Server, der genau für ein Frontend gebaut ist und zwischen Browser und externen Diensten vermittelt. Das Frontend spricht nur noch mit dem BFF (`/api/bears`); der BFF spricht mit Wikipedia, bereinigt die Antwort und liefert genau das zurück, was die UI braucht. Das Frontend kennt den Upstream nicht mehr.
+>
+> **Was wandert vom Browser auf den Server:**
+>
+> - **Form der Daten**: Vorher musste der Browser das Wikitext der Seite "List of ursids" selbst laden und parsen (Tabellen, Bild-Lookups pro Bär). Jetzt macht das der Server und liefert ein normalisiertes `Bear`-Objekt (`id` als Slug, `name`, `binomial`, `imageUrl`, `range`), das mit zod validiert wird, bevor es den Server verlässt. Ändert Wikipedia sein Format, muss nur der Parser im BFF angepasst werden, nicht jeder ausgelieferte Client.
+> - **Secrets**: Ein Browser kann nichts geheim halten, jeder API-Key im Bundle ist öffentlich. Hinter einem BFF liegen Keys und Tokens in Umgebungsvariablen auf dem Server. Wikipedia braucht zwar keinen Key, aber das Prinzip ist der Hauptgrund für BFFs bei anderen Upstreams.
+> - **Header**: Der BFF setzt die Header zum Upstream selbst, z.B. den `User-Agent` mit App-Name und Kontakt, den die Wikimedia-Policy verlangt. Ein Browser darf `User-Agent` nicht frei setzen (verbotener Header-Name). Ebenso entscheidet der BFF, welche Header er an den Client weitergibt (z.B. `Cache-Control`, `x-request-id`) und welche interne Details nicht.
+> - **CORS**: Der Browser ruft nur noch die eigene Origin auf (in der Entwicklung über den Vite-Proxy, in Produktion vom selben Host oder mit expliziter Allow-List), es gibt keine Cross-Origin-Anfrage zu Wikipedia mehr. Der Server-zu-Server-Aufruf unterliegt keiner CORS-Prüfung, weil CORS eine Browser-Regel ist.
+> - **Fehlerbehandlung**: Timeout (`AbortSignal.timeout`), Statuscode-Prüfung, Parsing und Validierung passieren zentral auf dem Server. Der BFF übersetzt Upstream-Probleme in eine eigene, stabile Fehlersprache für das Frontend, statt dass die UI mit rohen Wikipedia-Antworten, Netzwerkfehlern und halb kaputten Daten umgehen muss.
+>
+> **Warum ist ein leeres 200 bei Upstream-Fehlern schlimmer als ein 502?**
+>
+> Der Statuscode ist der Vertrag zwischen Server und Client: `200` heißt "die Anfrage hat funktioniert, das ist die Antwort". Gibt der BFF bei einem Wikipedia-Ausfall `200 []` zurück, behauptet er, es gebe keine Bären, und lügt damit.
+>
+> - Der Client kann einen Fehler nicht vom echten leeren Ergebnis unterscheiden. Die UI zeigt eine leere Seite statt einer Fehlermeldung mit Retry-Möglichkeit. Genau das ist das Kriterium in der Aufgabe: bei blockiertem Upstream muss der Fehlerzustand sichtbar sein.
+> - Ein `502 Bad Gateway` (Upstream liefert Unsinn oder ist nicht erreichbar) bzw. `504 Gateway Timeout` (Upstream antwortet nicht rechtzeitig) sagt klar: Der Fehler liegt nicht beim Client und nicht im BFF selbst, ein späterer Retry kann helfen. Clients und Monitoring können darauf reagieren (Retry mit Backoff, Alarm).
+> - Caches, Proxys und Browser dürfen ein `200` unter Umständen speichern. Eine leere Fehlerantwort würde dann auch nach der Wiederherstellung des Upstreams weiter ausgeliefert. Fehlerstatus werden dagegen nicht als gültige Daten wiederverwendet.
+> - Monitoring und Logs zählen Fehlerraten über Statuscodes. Mit `200` bleibt der Ausfall unsichtbar, und die Metriken zeigen "alles grün", obwohl die Anwendung nichts mehr liefert.
+>
+> Das ist dasselbe Prinzip wie in Playground 1, Task 3: ein fehlgeschlagener Request darf nie als gültige leere Daten dargestellt werden.
+
 #### Task 3: Design the comments API
 
 Design and implement a comments resource with `GET /api/bears/:id/comments`, `POST /api/bears/:id/comments` (201 Created with a `Location` header) and `DELETE /api/comments/:commentId` (204 No Content). Validate the request body with zod (author and text non-empty, sensible length limits) and answer 400 for invalid input and 404 for unknown bears or comments. Store comments in memory for now (a `Map`) and connect the comment section of the React app to the API.
@@ -423,6 +446,24 @@ Design and implement a comments resource with `GET /api/bears/:id/comments`, `PO
 **Done:** comments created in the UI survive a page reload but not an API restart (you can explain why; Playground 5 fixes it); `curl` demonstrates 201, 204, 400 and 404.
 
 **Theory question:** Explain safe, idempotent and cacheable methods. Why is POST used for creating and why must DELETE be idempotent? What happens when a client retries a POST after a timeout, and what does that mean for the API?
+
+> **Answer:**
+>
+> **Safe, idempotent, cacheable** (RFC 9110):
+>
+> - **Safe**: Die Methode ändert keinen Zustand auf dem Server, sie liest nur (`GET`, `HEAD`, `OPTIONS`). Clients, Crawler und Prefetching dürfen sie deshalb jederzeit aufrufen.
+> - **Idempotent**: Mehrfaches Ausführen derselben Anfrage hat den gleichen Effekt auf den Serverzustand wie einmaliges Ausführen (`GET`, `PUT`, `DELETE` und alle sicheren Methoden). Die _Antwort_ darf sich unterscheiden, nur der Zustand danach muss gleich sein.
+> - **Cacheable**: Die Antwort darf zwischengespeichert und wiederverwendet werden (`GET`, `HEAD`, mit Einschränkungen `POST`, in der Praxis aber kaum). Safe und cacheable sind nicht dasselbe, aber ein Cache setzt voraus, dass die Anfrage keine Nebenwirkung braucht.
+>
+> **Warum POST zum Erstellen?** Beim Anlegen eines Kommentars vergibt der Server die ID (`POST /api/bears/:id/comments`). Der Client kennt die URL der neuen Ressource vorher nicht, deshalb passt `PUT` auf eine bekannte URL nicht. `POST` ist weder safe noch idempotent: Jeder Aufruf erzeugt eine neue Ressource. Die Antwort `201 Created` mit `Location: /api/comments/<id>` sagt dem Client, wo sie jetzt liegt.
+>
+> **Warum muss DELETE idempotent sein?** Weil Clients und Netzwerke wiederholen. Das Ziel von `DELETE` ist ein Zustand ("der Kommentar existiert nicht mehr"), und dieser Zustand ist nach dem ersten und nach jedem weiteren Aufruf derselbe. Ein automatischer Retry ist darum ungefährlich. In meiner API liefert das erste `DELETE` `204`, ein zweites `404`. Die Antwort unterscheidet sich also, der Serverzustand aber nicht. Das ist erlaubt, denn Idempotenz bezieht sich auf den Effekt, nicht auf den Statuscode. Ein `DELETE`, das beim Wiederholen zusätzlich etwas anderes löscht (z.B. "lösche den letzten Kommentar"), wäre dagegen nicht idempotent.
+>
+> **POST nach einem Timeout wiederholen**: Der Client weiß nicht, ob die Anfrage den Server nie erreicht hat oder ob der Kommentar gespeichert wurde und nur die Antwort verloren ging. Wiederholt er das `POST`, entsteht im zweiten Fall ein doppelter Kommentar mit neuer ID, denn der Server kann beide Anfragen nicht als gleich erkennen. Für die API heißt das:
+>
+> - Clients (und Proxys) dürfen `POST` nicht blind automatisch wiederholen, anders als `GET`, `PUT` und `DELETE`.
+> - Soll Wiederholen trotzdem sicher sein, braucht `POST` einen Idempotenz-Mechanismus: der Client schickt einen eindeutigen `Idempotency-Key` (z.B. eine UUID) im Header, der Server merkt sich Key und erste Antwort und liefert bei einer Wiederholung dieselbe Antwort statt einen neuen Kommentar zu erstellen. Alternativ vergibt der Client die ID selbst und die Erstellung läuft über `PUT /api/comments/:id`.
+> - In diesem Playground ist das nicht umgesetzt. Das Frontend wiederholt nicht automatisch und behält bei einem Fehler den eingegebenen Text, der Nutzer entscheidet also selbst über einen erneuten Versuch (und könnte so einen Kommentar doppelt anlegen). Ein doppelter Kommentar wäre hier ein kleiner Schaden, bei Zahlungen wäre er ein ernstes Problem.
 
 #### Task 4: One error format for everything
 
@@ -432,6 +473,21 @@ Introduce typed error classes and a central Fastify error handler that renders e
 
 **Theory question:** Why should an API have exactly one error contract? Which information must never leave the server in an error, and how do request ids connect a user's complaint to a log line?
 
+> **Answer:**
+>
+> **Warum genau ein Fehlervertrag?** Ein Client muss Fehler maschinell verarbeiten können, ohne den Server zu kennen. Gibt es nur ein Format (bei uns RFC 9457: `type`, `title`, `status`, `detail`, `instance`, bei Validierung zusätzlich `errors`), reicht _ein_ Parser im Frontend: `api-error.ts` liest die Antwort und zeigt `detail` an, egal ob sie von einer 400-, 404-, 502- oder 500-Antwort kommt. Gäbe es pro Route eigene Formen (`{error: "..."}`, `{message: ...}`, HTML-Fehlerseite von Fastify oder Proxy), müsste jeder Aufrufer raten und Sonderfälle behandeln, und neue Fehlerfälle würden das Frontend brechen. Ein zentraler Error-Handler stellt zudem sicher, dass kein Fehler "vorbeirutscht": auch unbekannte Routen (404-Handler), Validierungsfehler und unerwartete Exceptions laufen durch dieselbe Stelle. Der Vertrag ist außerdem dokumentierbar (das `Problem`-Schema in `/api/docs`) und testbar. Die Statuscodes bleiben dabei die maschinenlesbare Hauptinformation, `detail` ist der Text für Menschen.
+>
+> **Was darf den Server nie verlassen?**
+>
+> - Stacktraces, Dateipfade und Quellcode-Zeilen,
+> - interne Fehlermeldungen von Bibliotheken, Datenbank (SQL, Tabellen- und Spaltennamen, Connection Strings) und Upstream-Antworten im Rohzustand,
+> - Secrets, Tokens, Passwörter, Konfigurationswerte und Umgebungsvariablen,
+> - Interna der Infrastruktur (interne Hostnamen, IPs, Versionen), und bei Auth-Fehlern Hinweise, die Angreifern helfen (z.B. "Benutzer existiert, Passwort falsch").
+>
+> Solche Details helfen einem Angreifer beim Auskundschaften und dem Nutzer nicht. Deshalb trennt der Handler zwei Texte: `HttpError.detail` ist für den Client bestimmt, `message` (mit Interna) geht nur ins Log. Ein unerwarteter Fehler wird zu `500` mit dem festen Text `Internal Server Error`. Beim provozierten 500 (`ENABLE_DEBUG_ROUTES=1`) steht "Provoked 500 (secret internal detail)" im Log, aber nicht in der Antwort. Auch ein 502 sagt nur "Wikipedia is currently unavailable.", nicht die genaue Ursache.
+>
+> **Request-IDs**: Jede Anfrage bekommt eine ID (`x-request-id`, entweder vom Client mitgeschickt oder vom Server als UUID erzeugt). Sie steht an drei Stellen: im Response-Header, im Feld `instance` (`urn:request:<id>`) der Problem-Antwort und in jeder Logzeile der Anfrage (Fastify/pino loggt sie als `reqId`). Meldet sich ein Nutzer mit "Beim Speichern kam ein Fehler", genügt die ID aus der Fehlermeldung oder den DevTools. Im Log findet man damit genau diese Anfrage samt Stacktrace und Ursache (`grep <id>`), ohne dass Interna beim Nutzer landen. Die ID bleibt auch über mehrere Dienste hinweg nutzbar, wenn jeder sie weiterreicht und loggt, und lässt sich so in verteilten Systemen zu einer Spur zusammensetzen.
+
 #### Task 5: CORS and the API contract
 
 In development Vite proxies `/api`, so the browser sees one origin. Now serve the built web app from a different origin (for example `vite preview` on port 4173 without the proxy) and observe the failing requests. Configure `@fastify/cors` with an allow-list of origins from the environment and the methods and headers your API needs, and watch the preflight of a `DELETE` and of a JSON `POST` in the browser's network tab. Finally generate an OpenAPI 3.1 document from your zod route schemas (`@fastify/swagger`) and serve it at `/api/docs`.
@@ -439,6 +495,19 @@ In development Vite proxies `/api`, so the browser sees one origin. Now serve th
 **Done:** the preflight (OPTIONS) and the successful cross-origin request are visible in DevTools; `/api/docs` lists every route including the Problem Details schema.
 
 **Theory question:** Who enforces CORS, the browser or the server? What is the difference between a simple and a preflighted request? Why can `Access-Control-Allow-Origin: *` not be combined with credentials, and why does a BFF make most CORS problems disappear?
+
+> **Answer:**
+>
+> **Wer erzwingt CORS?** Der Browser. CORS ist eine Schutzregel der Same-Origin-Policy, keine Server-Sicherheitsfunktion. Der Server schickt nur Header (`Access-Control-Allow-Origin`, `-Methods`, `-Headers`), die sagen, welche fremden Origins die Antwort lesen dürfen. Der Browser prüft diese Header und blockiert bei einer Abweichung den Zugriff des JavaScripts auf die Antwort. Der Server kann die Anfrage dabei trotzdem schon verarbeitet haben (bei einem einfachen `POST` wurde sie ausgeführt, nur die Antwort ist unlesbar). `curl`, Postman oder ein anderer Server kennen CORS gar nicht. Deshalb ersetzt CORS weder Authentifizierung noch Autorisierung. Es schützt Nutzer davor, dass eine fremde Webseite mit ihrem Browser (und ihren Cookies) eine API ausliest. Bei uns prüft `@fastify/cors` die `Origin` gegen die Allow-List aus `CORS_ORIGINS`. Eine nicht erlaubte Origin bekommt keinen `Access-Control-Allow-Origin`-Header, und der Browser blockiert die Antwort.
+>
+> **Einfache vs. preflighted Anfrage:**
+>
+> - **Einfach**: Methode `GET`, `HEAD` oder `POST`, nur "harmlose" Header und bei `POST` nur die Content-Types `application/x-www-form-urlencoded`, `multipart/form-data` oder `text/plain`. Der Browser sendet die Anfrage direkt mit einem `Origin`-Header und prüft erst die Antwort.
+> - **Preflighted**: Alles andere, z.B. `DELETE`, `PUT`, `PATCH`, ein eigener Header wie `x-request-id` oder `Content-Type: application/json`. Der Browser schickt zuerst automatisch eine `OPTIONS`-Anfrage mit `Origin`, `Access-Control-Request-Method` und `Access-Control-Request-Headers`. Nur wenn die Antwort (bei uns `204` mit `Access-Control-Allow-Methods`, `-Allow-Headers`, `-Allow-Origin`) das erlaubt, folgt die eigentliche Anfrage. Der Preflight schützt Server, die nie mit solchen Anfragen aus fremden Seiten gerechnet haben, vor Nebenwirkungen. Mit `Access-Control-Max-Age` (bei uns 600 s) darf der Browser das Ergebnis zwischenspeichern und spart so die zusätzliche Anfrage. In den DevTools sieht man beim `DELETE` und beim JSON-`POST` deshalb je zwei Einträge: `OPTIONS` und danach die eigentliche Anfrage.
+>
+> **Warum `*` nicht mit Credentials?** Credentials sind Cookies, HTTP-Auth und Client-Zertifikate (`fetch` mit `credentials: 'include'`). Würde `Access-Control-Allow-Origin: *` zusammen mit `Access-Control-Allow-Credentials: true` gelten, dürfte _jede_ beliebige Webseite im Browser eines angemeldeten Nutzers authentifizierte Anfragen an die API schicken und die Antworten lesen. Das wäre ein Freibrief für fremde Seiten, im Namen des Nutzers zu handeln. Deshalb verwirft der Browser diese Kombination: Bei Credentials muss der Server eine konkrete Origin zurückgeben (und `Vary: Origin` setzen), ebenso bei `Allow-Headers` und `Allow-Methods` keine Wildcards verwenden. Deshalb nutzt unsere API eine explizite Allow-List aus der Umgebung. Wir senden aktuell keine Cookies, die Regel gilt aber, sobald Sessions kommen.
+>
+> **Warum lässt ein BFF CORS-Probleme verschwinden?** CORS entsteht nur, wenn der Browser eine _andere_ Origin (Schema, Host oder Port) aufruft. Ein BFF liegt aus Sicht des Browsers auf derselben Origin wie das Frontend (in der Entwicklung über den Vite-Proxy `/api`, in Produktion z.B. über einen Reverse Proxy). Damit gibt es keine Cross-Origin-Anfrage, keinen Preflight und keine Header-Konfiguration. Die Aufrufe zu Drittanbietern wie Wikipedia macht der Server, für den CORS nicht gilt. Erst wenn wir die gebaute App von einer anderen Origin ausliefern (z.B. `vite preview` auf 4173 und API auf 3000), brauchen wir die CORS-Konfiguration wirklich.
 
 ## 5. Persistence and Data Modelling
 
