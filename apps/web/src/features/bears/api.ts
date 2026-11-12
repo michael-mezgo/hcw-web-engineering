@@ -1,9 +1,9 @@
-import { checkResponseOk } from '../../api-error';
+import { API_BASE_URL, checkResponseOk } from '../../api-error';
 import type { Bear } from './types';
 
 // The browser only talks to our own API (Backend for Frontend).
 export async function loadBears(signal: AbortSignal): Promise<Bear[]> {
-  const response = await fetch('/api/bears', { signal });
+  const response = await fetch(`${API_BASE_URL}/api/bears`, { signal });
 
   await checkResponseOk(response);
 

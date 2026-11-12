@@ -1,7 +1,10 @@
 import { z } from 'zod';
 
 // Stable slug of the binomial name, e.g. "ursus-arctos".
-export const BearId = z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/);
+export const BearId = z
+  .string()
+  .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/)
+  .meta({ examples: ['ursus-arctos'] });
 
 export const BearSchema = z.object({
   id: BearId,

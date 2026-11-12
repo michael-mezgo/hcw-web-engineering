@@ -37,3 +37,7 @@ export async function checkResponseOk(response: Response): Promise<Response> {
 export function errorMessage(error: unknown, fallback: string): string {
   return error instanceof ApiError ? error.message : fallback;
 }
+
+// Empty in development (Vite proxies /api). Set VITE_API_BASE_URL at build
+// time to call an API on another origin, e.g. http://localhost:3000.
+export const API_BASE_URL: string = import.meta.env.VITE_API_BASE_URL ?? '';

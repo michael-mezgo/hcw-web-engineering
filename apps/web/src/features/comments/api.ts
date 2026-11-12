@@ -1,4 +1,4 @@
-import { checkResponseOk } from '../../api-error';
+import { API_BASE_URL, checkResponseOk } from '../../api-error';
 import type { Comment } from './types';
 
 // Comments live in our own API, per bear.
@@ -7,7 +7,7 @@ export async function loadComments(
   signal: AbortSignal
 ): Promise<Comment[]> {
   const response = await fetch(
-    `/api/bears/${encodeURIComponent(bearId)}/comments`,
+    `${API_BASE_URL}/api/bears/${encodeURIComponent(bearId)}/comments`,
     { signal }
   );
 
@@ -28,7 +28,7 @@ export async function createComment(
   text: string
 ): Promise<Comment> {
   const response = await fetch(
-    `/api/bears/${encodeURIComponent(bearId)}/comments`,
+    `${API_BASE_URL}/api/bears/${encodeURIComponent(bearId)}/comments`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -43,7 +43,7 @@ export async function createComment(
 
 export async function deleteComment(commentId: string): Promise<void> {
   const response = await fetch(
-    `/api/comments/${encodeURIComponent(commentId)}`,
+    `${API_BASE_URL}/api/comments/${encodeURIComponent(commentId)}`,
     { method: 'DELETE' }
   );
 
