@@ -13,8 +13,10 @@ export default function BearImage({
 }: BearImageProps): JSX.Element {
   const style = { width: `${width}px`, height: 'auto' };
 
-  if (bear.image !== null && bear.image !== '') {
-    return <img src={bear.image} alt={`Image of ${bear.name}`} style={style} />;
+  if (bear.imageUrl !== null && bear.imageUrl !== '') {
+    return (
+      <img src={bear.imageUrl} alt={`Image of ${bear.name}`} style={style} />
+    );
   }
 
   return (
