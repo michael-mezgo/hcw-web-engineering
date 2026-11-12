@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { errorMessage } from '../../api-error';
 import { loadBears } from './api';
 import type { Bear } from './types';
 
@@ -28,8 +29,10 @@ export function useBears(): BearsState {
         console.error('Failed to load bears:', error);
         setState({
           status: 'error',
-          message:
-            "We couldn't load the bear list right now. Please try again later.",
+          message: errorMessage(
+            error,
+            "We couldn't load the bear list right now. Please try again later."
+          ),
         });
       }
     };

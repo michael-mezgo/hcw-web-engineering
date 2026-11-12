@@ -1,3 +1,4 @@
+import { checkResponseOk } from '../../api-error';
 import type { Comment } from './types';
 
 // Comments live in our own API, per bear.
@@ -10,9 +11,7 @@ export async function loadComments(
     { signal }
   );
 
-  if (!response.ok) {
-    throw new Error('Comments request failed with status ' + response.status);
-  }
+  await checkResponseOk(response);
 
   const data: unknown = await response.json();
 
@@ -37,11 +36,7 @@ export async function createComment(
     }
   );
 
-  if (!response.ok) {
-    throw new Error(
-      'Creating the comment failed with status ' + response.status
-    );
-  }
+  await checkResponseOk(response);
 
   return (await response.json()) as Comment;
 }
@@ -52,9 +47,5 @@ export async function deleteComment(commentId: string): Promise<void> {
     { method: 'DELETE' }
   );
 
-  if (!response.ok) {
-    throw new Error(
-      'Deleting the comment failed with status ' + response.status
-    );
-  }
+  await checkResponseOk(response);
 }

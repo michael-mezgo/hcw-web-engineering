@@ -1,4 +1,5 @@
 import { useEffect, useState, type JSX } from 'react';
+import { errorMessage } from '../../api-error';
 import { createComment, deleteComment, loadComments } from './api';
 import CommentForm from './CommentForm';
 import CommentList from './CommentList';
@@ -29,7 +30,9 @@ export default function CommentSection({
       } catch (loadError) {
         if (controller.signal.aborted) return;
         console.error('Failed to load comments:', loadError);
-        setError('We could not load the comments right now.');
+        setError(
+          errorMessage(loadError, 'We could not load the comments right now.')
+        );
       } finally {
         if (!controller.signal.aborted) setIsLoading(false);
       }
@@ -51,7 +54,12 @@ export default function CommentSection({
       return true;
     } catch (createError) {
       console.error('Failed to create comment:', createError);
-      setError('We could not save your comment. Please try again.');
+      setError(
+        errorMessage(
+          createError,
+          'We could not save your comment. Please try again.'
+        )
+      );
       return false;
     }
   };
@@ -63,7 +71,12 @@ export default function CommentSection({
       setError(null);
     } catch (deleteError) {
       console.error('Failed to delete comment:', deleteError);
-      setError('We could not delete the comment. Please try again.');
+      setError(
+        errorMessage(
+          deleteError,
+          'We could not delete the comment. Please try again.'
+        )
+      );
     }
   };
 

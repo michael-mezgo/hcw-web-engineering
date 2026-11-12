@@ -1,5 +1,6 @@
 import type { FastifyPluginAsync } from 'fastify';
 
+import { NotFoundError } from '../errors.js';
 import { BearId } from '../schemas/bear.js';
 import { CommentId, CreateCommentSchema } from '../schemas/comment.js';
 import { getBearById } from '../services/bear-service.js';
@@ -8,57 +9,31 @@ import {
   deleteComment,
   listComments,
 } from '../services/comment-service.js';
+import { parseOrThrow } from '../validate.js';
 
-import { replyUpstreamError } from './reply-upstream-error.js';
+async function requireBear(rawId: string): Promise<string> {
+  const id = parseOrThrow(BearId, rawId, '/id');
+
+  if ((await getBearById(id)) === undefined) {
+    throw new NotFoundError('Bear');
+  }
+
+  return id;
+}
 
 export const commentRoutes: FastifyPluginAsync = async (app) => {
   app.get<{ Params: { id: string } }>(
     '/api/bears/:id/comments',
-    async (request, reply) => {
-      const id = BearId.safeParse(request.params.id);
-
-      if (!id.success) {
-        return await reply.code(400).send({ error: 'Invalid bear id' });
-      }
-
-      try {
-        if ((await getBearById(id.data)) === undefined) {
-          return await reply.code(404).send({ error: 'Bear not found' });
-        }
-      } catch (error: unknown) {
-        return await replyUpstreamError(reply, error);
-      }
-
-      return listComments(id.data);
-    }
+    async (request) => listComments(await requireBear(request.params.id))
   );
 
   app.post<{ Params: { id: string } }>(
     '/api/bears/:id/comments',
     async (request, reply) => {
-      const id = BearId.safeParse(request.params.id);
-
-      if (!id.success) {
-        return await reply.code(400).send({ error: 'Invalid bear id' });
-      }
-
-      const body = CreateCommentSchema.safeParse(request.body);
-
-      if (!body.success) {
-        return await reply
-          .code(400)
-          .send({ error: 'Invalid comment', details: body.error.issues });
-      }
-
-      try {
-        if ((await getBearById(id.data)) === undefined) {
-          return await reply.code(404).send({ error: 'Bear not found' });
-        }
-      } catch (error: unknown) {
-        return await replyUpstreamError(reply, error);
-      }
-
-      const comment = addComment(id.data, body.data);
+      // Validate the body before the (slower) bear lookup.
+      parseOrThrow(BearId, request.params.id, '/id');
+      const body = parseOrThrow(CreateCommentSchema, request.body);
+      const comment = addComment(await requireBear(request.params.id), body);
 
       return await reply
         .code(201)
@@ -70,14 +45,14 @@ export const commentRoutes: FastifyPluginAsync = async (app) => {
   app.delete<{ Params: { commentId: string } }>(
     '/api/comments/:commentId',
     async (request, reply) => {
-      const commentId = CommentId.safeParse(request.params.commentId);
+      const commentId = parseOrThrow(
+        CommentId,
+        request.params.commentId,
+        '/commentId'
+      );
 
-      if (!commentId.success) {
-        return await reply.code(400).send({ error: 'Invalid comment id' });
-      }
-
-      if (!deleteComment(commentId.data)) {
-        return await reply.code(404).send({ error: 'Comment not found' });
+      if (!deleteComment(commentId)) {
+        throw new NotFoundError('Comment');
       }
 
       return await reply.code(204).send();

@@ -1,12 +1,11 @@
+import { checkResponseOk } from '../../api-error';
 import type { Bear } from './types';
 
 // The browser only talks to our own API (Backend for Frontend).
 export async function loadBears(signal: AbortSignal): Promise<Bear[]> {
   const response = await fetch('/api/bears', { signal });
 
-  if (!response.ok) {
-    throw new Error('Bear list request failed with status ' + response.status);
-  }
+  await checkResponseOk(response);
 
   const data: unknown = await response.json();
 
