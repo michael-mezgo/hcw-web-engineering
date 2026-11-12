@@ -1,18 +1,19 @@
 # Web Engineering Coding Playground Template
 
-This repository is designed as the foundation for coding playgrounds in the Web Engineering course. It offers a structured space for experimenting with and mastering various web development technologies and practices. 
+This repository is designed as the foundation for coding playgrounds in the Web Engineering course. It offers a structured space for experimenting with and mastering various web development technologies and practices.
 The project is based on [this](https://developer.mozilla.org/en-US/docs/Learn/Accessibility/Accessibility_troubleshooting) repository from MDN.
 
-The project introduces a lot of code smells for you to tackle. 
+The project introduces a lot of code smells for you to tackle.
 **Let's get coding!**
 
 ## Submission Details and Deadlines
-* Coding playgrounds are **individual** work
-* Use this base template to create your project repository.
-* Submit your repository link once.
-* Each playground must be submitted via a new branch in that repository (last commit within deadline will be graded).
-  * Naming conventions of branch: <code>playground-1</code>, <code>playground-2</code>, ...
-* Each playground consists of 5 tasks, 1 point each. A task is complete only when both its implementation work and its theory question have been answered.
+
+- Coding playgrounds are **individual** work
+- Use this base template to create your project repository.
+- Submit your repository link once.
+- Each playground must be submitted via a new branch in that repository (last commit within deadline will be graded).
+  - Naming conventions of branch: <code>playground-1</code>, <code>playground-2</code>, ...
+- Each playground consists of 5 tasks, 1 point each. A task is complete only when both its implementation work and its theory question have been answered.
 
 ### Submission Deadlines
 * [1st Playground](#1-js-playground): 14.09.2026
@@ -38,21 +39,23 @@ The project introduces a lot of code smells for you to tackle.
 - Worst JS coding practices :cold_sweat:
 - No Build and Dependency Management at all :fire:
 
-
 # Coding Playground Description
 
 ## 1. JS Playground
-The provided base project template contains bad coding and templating practices and bugs for you to fix. Take a look into the component files and get a grasp of the inner workings of the provided project. The app should provide the requirements described below. Some are implemented poorly or do not work at all. 
+
+The provided base project template contains bad coding and templating practices and bugs for you to fix. Take a look into the component files and get a grasp of the inner workings of the provided project. The app should provide the requirements described below. Some are implemented poorly or do not work at all.
 
 ### App Requirements
-* On page load the app requests the Wikipedia API to extract bear information from Wikipedia's [list of ursids](https://en.wikipedia.org/wiki/List_of_ursids). The page then renders the provided image, the common name, the scientific name and it's range.
-  * the bears should be ordered in the same order and number (no duplicates) as in the corresponding Wiki page.
-  * if there is no image available, the app should show a placeholder image.
-* Users are able to toggle the comment section.
-* Users are able to leave their name and a comment (both should not be empty).
-* Users are able to search the web page contents using a search query, whereby only the html contents with tag <code>article</code> should be highlighted.
+
+- On page load the app requests the Wikipedia API to extract bear information from Wikipedia's [list of ursids](https://en.wikipedia.org/wiki/List_of_ursids). The page then renders the provided image, the common name, the scientific name and it's range.
+  - the bears should be ordered in the same order and number (no duplicates) as in the corresponding Wiki page.
+  - if there is no image available, the app should show a placeholder image.
+- Users are able to toggle the comment section.
+- Users are able to leave their name and a comment (both should not be empty).
+- Users are able to search the web page contents using a search query, whereby only the html contents with tag <code>article</code> should be highlighted.
 
 ### Tasks
+
 Fix the application code and support them with short code examples where useful.
 
 #### Task 1: Introduce ES modules
@@ -85,17 +88,45 @@ Find and eliminate the remaining bad coding practices. Consider scope, accidenta
 
 **Theory question:** Select one of your refactorings and explain how JavaScript scope, closures, references, or prototypes caused the original risk. State how you verified that your refactoring preserved behavior.
 
-> **What bad coding practices did you find? Why is it a bad practice and how did you fix it?**
-> 
-> _Present your findings here..._
+##### **What bad coding practices did you find? Why is it a bad practice and how did you fix it?**
+
+> [!NOTE]
+> Missing `#` for a HEX color value in [style.css](style.css). (Removed line - this pink was ugly 😉)
 >
-> ```js
-> console.log('Make use of markdown codesnippets to show and explain good/bad practices!')
+> ```css
+> div[class='nav'] {
+>   height: 50px;
+>   background-color: ff80ff;
+>   display: flex;
+>   padding: 1% 0;
+>   margin-bottom: 10px;
+> }
 > ```
 
+> [!NOTE]
+> No input validation on the comment form in [comments.js](scripts/comments.js) — the app requirement says "both should not be empty", but the original code created a comment from `nameField.value`/`commentField.value` regardless of their content, including empty or whitespace-only input. Fixed by adding `required` to both `<input>` elements in [index.html](index.html) (blocks the native form submit on empty fields) and, in `initCommentForm()`, trimming both values and rejecting whitespace-only input via `setCustomValidity(...)` + `form.reportValidity()`, which also gives the user visible native browser feedback on which field is invalid. Both fields also reset their custom validity on the `input` event, otherwise the browser would keep blocking the form after a failed attempt even once the user corrected the value.
+>
+> ```js
+> nameField.addEventListener('input', () => nameField.setCustomValidity(''));
+> commentField.addEventListener('input', () => commentField.setCustomValidity(''));
+>
+> form.addEventListener('submit', (e) => {
+>     e.preventDefault();
+>
+>     const nameValue = nameField.value.trim();
+>     const commentValue = commentField.value.trim();
+>
+>     nameField.setCustomValidity(nameValue ? '' : 'Please enter your name.');
+>     commentField.setCustomValidity(commentValue ? '' : 'Please enter a comment.');
+>
+>     if (!form.reportValidity()) return;
+>     ...
+> });
+> ```
 
 ## 2. Dependency- and Build Management Playground
-Build the application with ``npm`` and a build and a dependency management tool of your choice (e.g. [Vite](https://vitejs.dev/), [Webpack](https://webpack.js.org/), or others). 
+
+Build the application with `npm` and a build and a dependency management tool of your choice (e.g. [Vite](https://vitejs.dev/), [Webpack](https://webpack.js.org/), or others).
 
 ### Tasks
 
@@ -103,46 +134,169 @@ Build the application with ``npm`` and a build and a dependency management tool 
 
 Set up the project with `npm` and a build tool of your choice (for example, Vite or Webpack). Keep source files separate from generated distribution files and commit the package-manager lockfile.
 
+```bash
+npm init -y #use default values
+npm install --save-dev vite #vite only as a dev-dependency
+```
+
+> packege.json changes:
+> "type": "commonjs" -> "type": "module" #(we are using ES modules)
+> "main": "index.js" -> deleted #(we are using ES modules, no need for a main entry point=
+
+> Create `src/` directory and move all files into it - change the paths in `index.html` and `bears.js` accordingly:
+
+```bash
+mkdir src
+git mv scripts/ src/
+git mv media/ public/
+git mv style.css src/
+```
+
+> Add scripts to `package.json`:
+
+```json
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+```
+
 **Theory question:** Distinguish source, build, distribution, and deployment. What does your build tool do in development and in a production build, and why is the lockfile important for reproducibility?
+
+> #### Source, Build, Distribution, Deployment
+>
+> - Source: The original code written by developers, including HTML, CSS, JavaScript, and other assets.
+> - Build: The process of transforming source code into a format suitable for deployment, which may include bundling, minification, transpilation, and other optimizations.
+> - Distribution: The final output of the build process (`/dist` in this project)
+> - Deployment: Making the distribution available to users (upload it manually or via CI/CD pipeline to a web server)
+>
+> #### Build Tool Behavior
+>
+> - Development: The build tool serves the application with hot-reloading, allowing developers to see changes in real-time without needing to refresh the browser
+> - Production Build: The build tool optimizes the code for performance, including minification, resulting in a smaller and faster application.
+>
+> #### Lockfile Importance
+>
+> The lockfile ensures that all developers and CI environments use the same versions of dependencies, preventing unexpected issues caused by version discrepancies and ensuring reproducibility across different environments.
+> **Lockfile vs. package.json**: The lockfile locks the exact versions of dependencies, while `package.json` specifies version ranges. The lockfile ensures that everyone uses the same versions, while `package.json` allows for flexibility in dependency updates.
 
 #### Task 2: Migrate to TypeScript
 
 Use TypeScript as the primary development language and adapt the source files and configuration accordingly. Enable strict checking, model the application's domain data, and validate data received from external APIs before treating it as a typed value.
 
+```bash
+npm install --save-dev typescript
+npx tsc --init
+```
+
+> Changes in `tsconfig.json`:
+>
+> ```json
+> {
+>   "compilerOptions": {
+>     "module": "esnext", // we are using ES modules
+>     "moduleResolution": "bundler", // we are using Vite as a bundler
+>     "lib": ["ES2022", "DOM", "DOM.Iterable"], // DOM-APIs
+>     // deleted "jsx": "react-jsx"
+>     "noEmit": true // transpilation is handled by Vite, so we don't need to emit JS files from TypeScript
+>   },
+>   "include": ["src/"]
+> }
+> ```
+
+> Rename all `.js` files to `.ts`
+>
+> ```bash
+> git mv src/scripts/main.js src/scripts/main.ts
+> git mv src/scripts/bears.js src/scripts/bears.ts
+> git mv src/scripts/comments.js src/scripts/comments.ts
+> git mv src/scripts/search.js src/scripts/search.ts
+> ```
+
 **Theory question:** TypeScript uses structural typing and erases types during compilation. Explain both concepts and why a compile-time type alone cannot guarantee the shape of a Wikipedia API response at runtime.
+
+> **Structural Typing**: TypeScript nutzt structural typing, was bedeutet, dass die Kompatibilität von Typen auf der Struktur der Daten basiert, nicht auf den Namen der Typen. Zwei Typen gelten als kompatibel, wenn sie die gleichen Eigenschaften und Methoden haben, unabhängig davon, wie sie benannt sind (z.B. `{ name: string }` ist kompatibel mit `{ name: string, age: number }`, da beide eine `name`-Eigenschaft haben). - Bei Java wird im Gegensatz dazu nominal typing verwendet, bei dem die Typen explizit benannt werden müssen, um kompatibel zu sein.
+>
+> **Type erasure:** TypeScript-Typen existieren ausschließlich zur Compile-Zeit. Beim Kompilieren zu JavaScript (Vite in meinem Projekt) werden alle Typannotationen, Interfaces und Type-Guards-Signaturen vollständig entfernt — im ausgeführten JS-Code gibt es keine Spur mehr davon. Zur Laufzeit existiert kein Mechanismus, der prüft, ob ein Wert tatsächlich dem deklarierten Typ entspricht; das Typsystem ist zu diesem Zeitpunkt bereits "verschwunden".
+>
+> **Wikipedia API Response Validation**: Da TypeScript-Typen zur Laufzeit nicht existieren, kann der Compiler nicht garantieren, dass die Daten, die von der Wikipedia-API zurückgegeben werden, tatsächlich dem erwarteten Typ entsprechen. Die API könnte sich ändern, Fehler zurückgeben oder unerwartete Daten liefern. Daher ist es notwendig, die Form der Daten zur Laufzeit zu validieren (z.B. durch Überprüfen von Eigenschaften und Typen), bevor sie als sicherer Typ behandelt werden.
 
 #### Task 3: Add static analysis and formatting
 
 Configure ESLint and Prettier using the rulesets below. Resolve all reported errors in the application code and avoid disabling rules without a written justification.
 
+> Installed ESLint v8 (https://eslint.org/docs/v9.x/use/configure/configuration-files-deprecated - newer versions of ESLint use a different configuration file format) - Colleagues reported problems with newer versions
+> Therefore I had to downgrade TypeScript to v5.6
+>
+> ```bash
+> npm install --save-dev eslint@8 eslint-config-standard-with-typescript @typescript-eslint/eslint-plugin @typescript-eslint/parser eslint-plugin-import eslint-plugin-n eslint-plugin-promise eslint-plugin-prettier eslint-config-prettier prettier
+> npm install --save-dev typescript@5.6
+> ```
+>
+> ESLint found 287 problems (mostly prettier formatting issues)
+>
+> ```bash
+> npx prettier --write .
+> ```
+>
+> Now there are "only" 54 problems left
+>
+> ```bash
+> npx eslint --fix .
+> ```
+
 **Theory question:** What different problems do a linter, a formatter, and the TypeScript compiler detect? Give one concrete example for each from this project.
 
+> - **Linter**: Findet potentiell fehlerhafte oder riskante Muster im Code. Diese können aber trotzdem syntaktisch korrekt sein. Beispiel: In [bears.ts](src/scripts/bears.ts) habe ich oft gecheckt, ob die Variable nicht `null` oder `undefined` ist, auf leere Stings habe ich jedoch nicht gecheckt. Der Linter hat mich darauf hingewiesen, dass ich die Variable auf leere Strings prüfen sollte, da dies zu unerwartetem Verhalten führen kann. - ESLint Ausgabe: (`181:8 error Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions`)
+> - **Formatter**: Kümmert sich um die einheitliche Formatierung des Codes, wie Einrückungen, Leerzeichen, Zeilenlängen usw. Hat auf die Funktionsweise des Codes keinen Einfluss, dennoch gibt es in Firmen oft verbindliche Styleguides. Beispiel aus dem Projekt: 4 Spaces vs. 2 Spaces Einrückung
+> - **TypeScript Compiler**: Prüft die Typen und die Struktur des Codes (zur Build-Zeit (siehe Aufgabe 2)). Hier hatte ich keinen Fehler mehr, da diese bereits in der vorherigen Aufgabe ausgebessert wurden (`tsc --noEmit`).
 #### Task 4: Provide a consistent command interface
 
 Define the following tasks within `npm scripts`:
 
-  * `dev`: starts the development server.
-  * `build`: runs the typescript compiler and bundles your application - bundling depends on your chosen build tool (e.g. Vite, Webpack) but typically bundles multiple files into one, applies optimizations like minification and obfuscation and outputs final results to a `dist` or `build` directory.
-  * `lint`: runs ESLint on all  `.js` and `.ts` files in your projects `/src` directory.
-  * `lint:fix`: runs and also fixes all issues found by ESLint.
-  * `format`: formats all `.js` and `.ts` files in your projects `/src` directory.
-  * `format:check`: checks if the files in the `/src` directory are formatted according to Prettier's rules.
+- `dev`: starts the development server.
+- `build`: runs the typescript compiler and bundles your application - bundling depends on your chosen build tool (e.g. Vite, Webpack) but typically bundles multiple files into one, applies optimizations like minification and obfuscation and outputs final results to a `dist` or `build` directory.
+- `lint`: runs ESLint on all `.js` and `.ts` files in your projects `/src` directory.
+- `lint:fix`: runs and also fixes all issues found by ESLint.
+- `format`: formats all `.js` and `.ts` files in your projects `/src` directory.
+- `format:check`: checks if the files in the `/src` directory are formatted according to Prettier's rules.
 
 The `build`, `lint`, and `format:check` commands must exit with a non-zero status when their checks fail.
 
 **Theory question:** Why are stable, composable commands such as these useful as an interface for developers and CI? Explain idempotence and identify which of your scripts should be idempotent.
 
+> - **Stable, Composable Commands**: Ein einheitliches Befehlsset bildet eine stabile Schnittstelle. So finden sich Entwickler auch in anderen Projekten schnell zurecht. Zudem ist es für die einfache Verwendung egal, welches Tool in welcher Version genau dahinter steckt - der Aufruf bleibt gleich.
+> - **Idempotence**: Ein idempotenter Befehl kann beliebig oft ausgeführt werden, ohne dass sich das Ergebnis ändert. ("Mehrfaches Ausführen mit demselben Input führt zum selben Endzustand wie einmaliges Ausführen.")
+>   - Projekt-spezifische Beispiele:
+>     - `format` und `lint:fix` sind idempotent. Wenn sie einmal ausgeführt wurden, ändert sich das Ergebnis nicht mehr auch wenn sie wieder ausgeführt werden.
+>     - `lint` und `format:check` sind read-only. Daher auch idempotent (vgl. HTTP-GET). Sie geben immer das gleiche Ergebnis zurück (bei selbem Input-Code)
+>     - `build` grundsätzlich auch idempotent - kommt allerdings auch darauf an, wie z.B. die minification funktioniert
+>     - `dev` ist nicht idempotent, da es einen Server startet und dieser beim zweiten Aufruf bereits läuft und daher fehlschlägt
+
 #### Task 5: Enforce quality before integration
 
 Configure a pre-commit hook that checks staged code using [husky](https://typicode.github.io/husky/) and [lint-staged](https://github.com/lint-staged/lint-staged). Configure a continuous-integration workflow that installs dependencies from the lockfile and runs the non-mutating build, type, lint, and formatting checks for every push or pull request.
 
+> ```bash
+> npm install --save-dev husky lint-staged
+> npx husky init
+> chmod +x .husky/pre-commit
+> ```
 **Theory question:** Compare a local pre-commit hook with a CI quality gate. Why is CI still necessary when hooks are configured, and why should CI use non-mutating checks rather than automatically rewriting source files?
 
+> - **Hook**: Läuft am Rechner des Entwicklers, bevor ein Commit erstellt wird. Es kann den Commit blockieren, wenn die Checks fehlschlagen. Vorteil: Entwickler erhalten sofortiges Feedback und können Probleme direkt beheben, daher weniger Commits mit "Fix xy". Nachteil: Hooks sind lokal und können umgangen oder deaktiviert werden.
+> - **CI Quality Gate**: Läuft auf einem zentralen Server (z.B. GitHub Actions) und prüft den Code, bevor er in den Hauptbranch integriert wird. Vorteil: Alle Commits werden überprüft, unabhängig davon, ob der Entwickler Hooks deaktiviert hat. Es gibt auch im Nachhinein nicht die Ausrede "bei mir hat es funktioniert".  Nachteil: Feedback kommt erst nach dem Push, daher kann es zu mehr "Fix xy"-Commits kommen.
+>
+> **Warum CI trotz Hook?**: Warum CI trotz Hook? - Siehe oben Nachteile von Hooks.
+> **CI non-mutating checks**: CI sollte keine Änderungen am Code vornehmen, da dies zu unerwarteten Änderungen führen kann, die der Entwickler nicht beabsichtigt hat. Zudem ist es ein Sicherheitsrisiko: CI braucht Schreibrechte am Repo. Stattdessen sollte CI nur prüfen, ob der Code den Standards entspricht und Fehler melden, damit der Entwickler diese selbst beheben kann. - **Non mutating** checks haben auch den Vorteil, dass sie immer reproduzierbar sind.
 
 **ESLint Configurations**
 
 Use ESLint configs [standard-with-typescript](https://www.npmjs.com/package/eslint-config-standard-with-typescript) and [TypeScript ESLint Plugin](https://www.npmjs.com/package/@typescript-eslint/eslint-plugin).
 Your `.eslintrc` file should have the following extensions:
+
 ```.eslintrc.yml
 ...
 extends:
@@ -152,11 +306,12 @@ extends:
   - prettier
 ...
 ```
- 
+
 **Prettier Configurations**
 
 Apply the following ruleset for Prettier:
-``` .prettierrc
+
+```.prettierrc
 {
   "semi": true,
   "singleQuote": true,
@@ -167,6 +322,7 @@ Apply the following ruleset for Prettier:
 ```
 
 ## 3. Migrate to a Frontend Framework
+
 In this playground you will migrate your application to React with TypeScript while retaining the build and quality pipeline from Playground 2.
 
 ### Tasks
@@ -175,7 +331,24 @@ In this playground you will migrate your application to React with TypeScript wh
 
 Add React (or another framework of your choice) to the existing Vite and TypeScript project and migrate the page entry point to a React root. Preserve the build, linting, formatting, and CI setup from Playground 2, adapting scripts and configuration where necessary.
 
+> ```bash
+> npm install react react-dom 
+> npm install --save-dev @types/react @types/react-dom @vitejs/plugin-react
+> ```
+
 **Theory question:** Contrast imperative DOM updates with React's declarative model. What happens during React's render, reconciliation, and commit phases, and why should code outside React not modify DOM nodes owned by the React root? If you chose not to use React, answer the same questions in the context of your chosen framework.
+
+> **Imparativ**: Sagt, _wie_ sich das DOM ändert. Beispiele: `createElement`, `appendChild`. Das hat den Nachteil, dass man sich selbst darum kümmern muss. Bei jeder Interaktion kommen neue Fälle dazu, die man berücksichtigen muss. Das ist eine Fehlerquelle (vergessene Updates, doppelte Einträge, ...).
+> **Deklarativ**: Sagt, _was_ das DOM darstellen soll. React kümmert sich darum, dass das DOM immer den aktuellen Zustand der Anwendung widerspiegelt. Man beschreibt nur, wie die UI aussehen soll, und React kümmert sich um die Details der Aktualisierung.
+> 
+> **Die 3 Phasen von React**:
+> 1. **Render**: Wird in 2 Fällen aufgerufen: initial Render und State Änderungen. React erstellt einen Virtual DOM basierend auf den Komponenten und deren Props/State.
+> 2. **Reconciliation**: React vergleicht den neuen Virtual DOM mit dem DOM. Es entscheidet, welche Teile des echten DOM aktualisiert werden müssen.
+> 3. **Commit**: React wendet die Änderungen am echten DOM an. Danach laufen `useLayoutEffect` und `useEffect`. Nur in dieser Phase wird das echte DOM verändert.
+>
+> **Warum sollte Code außerhalb von React das DOM nicht verändern?**: Wenn Code außerhalb von React das DOM verändert, kann React diese Änderungen nicht erkennen. Bei der nächsten Reconciliation könnte React die Änderungen überschreiben, da es den Zustand des Virtual DOMs als Quelle der Wahrheit betrachtet. Dies kann zu unerwartetem Verhalten führen.
+> 
+> [Quelle](https://medium.com/@mukeshsharma20120/understanding-reacts-render-reconciliation-diffing-commit-phases-63913e775d8d)
 
 #### Task 2: Design the component tree
 
@@ -183,11 +356,25 @@ Decompose the interface into components organised by feature. Use props where ap
 
 **Theory question:** Explain how component boundaries and typed props act as contracts. What makes a key stable, why does React need keys during reconciliation, and why is an array index unsuitable when list entries can change order?
 
+> Eine Komponente ist eine abgeschlossene Einheit, die eine bestimmte Funktionalität kapselt. Sie hat klar definierte Eingaben (Props) und Ausgaben (Render-Ergebnis). Props sind wie Parameter für Funktionen: Sie geben der Komponente die Daten, die sie benötigt, um korrekt zu rendern. Typisierte Props stellen sicher, dass die Daten, die an eine Komponente übergeben werden, den erwarteten Typen entsprechen. Dies wirkt wie ein Vertrag zwischen der Komponente und ihrem Aufrufer: Wenn der Vertrag verletzt wird (z.B. falscher Typ), kann TypeScript einen Fehler melden.
+> Dies hält das Single-Responsibility-Prinzip ein, da jede Komponente nur für ihre eigene Logik verantwortlich ist. So ist es z.B. der Bear-List egal woher die Daten kommen, solange sie in der richtigen Form (Props) übergeben werden.
+> 
+> **Stable Keys**: Stabiler Key - referenziert Listeneintrag eindeutig und bleibt über mehrere Renders hinweg gleich - unabhängig von Reihenfolge oder Filterung. React verwendet Keys, um Listeneinträge effizient zu aktualisieren. Wenn ein Key sich ändert, denkt React, dass es sich um einen neuen Eintrag handelt, und entfernt den alten Eintrag aus dem DOM und fügt den neuen hinzu. Dies kann zu unnötigen DOM-Operationen führen und den Zustand von Komponenten verlieren.
+> Wir nutzen einen Slug aus dem eindeutigen Bären-Namen als Key, da dieser stabil ist. Ein Array-Index wäre ungeeignet, da sich die Reihenfolge der Bären ändern kann (z.B. durch Filterung oder Sortierung).
+
 #### Task 3: Model state and interaction
 
 Implement the comment toggle, comment form, and search behavior with React events and state. Use controlled inputs, immutable updates, and derived values rather than duplicate state. Lift state only to the closest common owner that needs it.
 
 **Theory question:** Distinguish props, stored state, and derived values. Explain why direct mutation can produce incorrect React behavior and when lifting state is preferable to introducing context.
+
+> - **Props:** Props sind schreibgeschützte Eingaben, die von einer übergeordneten Komponente an eine untergeordnete Komponente übergeben werden. Sie dienen dazu, Daten und Funktionen weiterzugeben.
+> - **Stored State:** Stored State ist der interne Zustand einer Komponente. Dieser kann sich ändern -> Re-Render der Komponente.
+> - **Derived Values:** Derived Values sind Werte, die aus Props und/oder Stored State berechnet werden. Sie werden nicht direkt gespeichert, sondern bei jedem Render neu berechnet (z.B. Button "Hide Comments" vs. "Show Comments" - abhängig vom State `isOpen`).
+> 
+> **Direct Mutation:** Wenn man den State direkt mutiert (z.B. `state.value = newValue`), erkennt React die Änderung nicht, da es auf Referenzänderungen achtet. Dies kann dazu führen, dass die Komponente nicht neu gerendert wird und der UI-Zustand inkonsistent wird.
+> 
+> **Lifting vs. Context**: Lifting State bedeutet, den State in die nächsthöhere gemeinsame Komponente zu verschieben, sodass mehrere untergeordnete Komponenten darauf zugreifen können. / Context ist nützlich, wenn viele, tief verschachtelte Komponenten auf denselben State zugreifen müssen und das durchreichen als Props unpraktisch wird. Beispiel: Suchbegriff
 
 #### Task 4: Load and represent remote data
 
@@ -195,9 +382,15 @@ Load and validate the bear data within the React application. Represent loading,
 
 **Theory question:** Why is fetching data a synchronization with an external system rather than part of pure rendering? Explain how cleanup or cancellation prevents race conditions when a component unmounts or a request becomes irrelevant.
 
+> 
+
 #### Task 5: Add client-side routing and verify the migration
 
 Add at least a list route and a bear-detail route using a stable bear identifier as a route parameter. Use query parameters for optional search/filter view state where appropriate. Verify that every requirement from Playground 1 still works and that all Playground 2 quality commands pass.
+
+> ```bash
+> npm install react-router-dom
+> ```
 
 **Theory question:** Distinguish client-side rendering, a single-page application, and client-side routing. Compare route parameters with query parameters, and describe one benefit and one cost of the SPA architecture used here.
 
@@ -388,22 +581,23 @@ Support an `Idempotency-Key` header on `POST /api/bears/:id/comments`: store key
 ---
 
 ## In-Class Accessibility Workshop
+
 You might have noticed that the base project has a number of accessibility issues - your task is to explore the existing site and fix them. Use the tools presented in our accessibility workshop to test the accessibility of your app and write a summary of your reports below.
 
 ### Tasks
-* Accessibility Checks:
-  * **Color**: Test the current color contrast (text/background), report the results of the test, and then fix them by changing the assigned colors.
-  * **Semantic HTML**: Report on what happens when you try to navigate the page using a screen reader. Fix those navigation issues.
-  * **Audio**: The ``<audio>`` player isn't accessible to hearing impaired people — can you add some kind of accessible alternative for these users?
-  * **Forms**:
-    * The ``<input>`` element in the search form at the top could do with a label, but we don't want to add a visible text label that would potentially spoil the design and isn't really needed by sighted users. Fix this issue by adding a label that is only accessible to screen readers.
-    * The two ``<input>`` elements in the comment form have visible text labels, but they are not unambiguously associated with their labels — how do you achieve this? Note that you'll need to update some of the CSS rule as well.
-  * **Comment Section**: The show/hide comment control button is not currently keyboard-accessible. Can you make it keyboard accessible, both in terms of focusing it using the tab key, and activating it using the return key?
-  * **The table**: The data table is not currently very accessible — it is hard for screen reader users to associate data rows and columns together, and the table also has no kind of summary to make it clear what it shows. Can you add some features to your HTML to fix this problem?
 
+- Accessibility Checks:
+  - **Color**: Test the current color contrast (text/background), report the results of the test, and then fix them by changing the assigned colors.
+  - **Semantic HTML**: Report on what happens when you try to navigate the page using a screen reader. Fix those navigation issues.
+  - **Audio**: The `<audio>` player isn't accessible to hearing impaired people — can you add some kind of accessible alternative for these users?
+  - **Forms**:
+    - The `<input>` element in the search form at the top could do with a label, but we don't want to add a visible text label that would potentially spoil the design and isn't really needed by sighted users. Fix this issue by adding a label that is only accessible to screen readers.
+    - The two `<input>` elements in the comment form have visible text labels, but they are not unambiguously associated with their labels — how do you achieve this? Note that you'll need to update some of the CSS rule as well.
+  - **Comment Section**: The show/hide comment control button is not currently keyboard-accessible. Can you make it keyboard accessible, both in terms of focusing it using the tab key, and activating it using the return key?
+  - **The table**: The data table is not currently very accessible — it is hard for screen reader users to associate data rows and columns together, and the table also has no kind of summary to make it clear what it shows. Can you add some features to your HTML to fix this problem?
 
->
 > _Note your findings here..._
->
 
 <p>© 2026 Leon Freudenthaler (Hochschule Campus Wien). All rights reversed.</p>
+
+Info: KI für die Formulierung der Theorieantworten verwendet.
