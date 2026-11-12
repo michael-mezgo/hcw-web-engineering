@@ -2,6 +2,7 @@ import type { JSX } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useBearsState } from '../features/bears/BearsContext';
 import BearImage from '../features/bears/BearImage';
+import CommentSection from '../features/comments/CommentSection';
 
 export default function BearDetailPage(): JSX.Element {
   const { id } = useParams();
@@ -52,6 +53,7 @@ export default function BearDetailPage(): JSX.Element {
         <p>
           <b>Range:</b> {bear.range}
         </p>
+        <CommentSection bearId={bear.id} />
         <Link to="/">Back to all bears</Link>
       </article>
     </main>

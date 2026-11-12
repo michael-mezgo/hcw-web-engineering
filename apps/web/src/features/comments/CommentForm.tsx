@@ -1,7 +1,7 @@
 import { useState, type FormEvent, type JSX } from 'react';
 
 interface CommentFormProps {
-  onAdd: (name: string, text: string) => void;
+  onAdd: (author: string, text: string) => Promise<boolean>;
 }
 
 export default function CommentForm({ onAdd }: CommentFormProps): JSX.Element {
@@ -13,7 +13,9 @@ export default function CommentForm({ onAdd }: CommentFormProps): JSX.Element {
   const nameMissing = name.trim() === '';
   const textMissing = text.trim() === '';
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>): void => {
+  const handleSubmit = async (
+    event: FormEvent<HTMLFormElement>
+  ): Promise<void> => {
     event.preventDefault();
 
     if (nameMissing || textMissing) {
@@ -21,14 +23,22 @@ export default function CommentForm({ onAdd }: CommentFormProps): JSX.Element {
       return;
     }
 
-    onAdd(name.trim(), text.trim());
-    setName('');
-    setText('');
-    setShowErrors(false);
+    // Keep the input if saving failed, so nothing the user typed is lost.
+    if (await onAdd(name.trim(), text.trim())) {
+      setName('');
+      setText('');
+      setShowErrors(false);
+    }
   };
 
   return (
-    <form className="comment-form" onSubmit={handleSubmit} noValidate>
+    <form
+      className="comment-form"
+      onSubmit={(event) => {
+        void handleSubmit(event);
+      }}
+      noValidate
+    >
       <div className="flex-pair">
         <label htmlFor="name">Your name:</label>
         <input

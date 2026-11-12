@@ -1,5 +1,4 @@
 import type { JSX } from 'react';
-import CommentSection from '../comments/CommentSection';
 import MoreBears from '../bears/MoreBears';
 import Highlight from '../search/Highlight';
 import BearTypesTable from './BearTypesTable';
@@ -54,7 +53,6 @@ export default function Article(): JSX.Element {
         </h3>
         <Highlight text="Evan Wild is an unemployed plumber from Doncaster..." />
       </aside>
-      <CommentSection />
       <MoreBears />
     </article>
   );

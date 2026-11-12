@@ -1,24 +1,9 @@
-import type { FastifyPluginAsync, FastifyReply } from 'fastify';
+import type { FastifyPluginAsync } from 'fastify';
 
-import { UpstreamError, UpstreamTimeoutError } from '../errors.js';
 import { BearId } from '../schemas/bear.js';
 import { getBearById, getBears } from '../services/bear-service.js';
 
-// Translates upstream failures into 504/502; everything else stays a 500.
-async function replyUpstreamError(
-  reply: FastifyReply,
-  error: unknown
-): Promise<FastifyReply> {
-  if (error instanceof UpstreamTimeoutError) {
-    return await reply.code(504).send({ error: 'Wikipedia request timed out' });
-  }
-
-  if (error instanceof UpstreamError) {
-    return await reply.code(502).send({ error: 'Wikipedia unavailable' });
-  }
-
-  throw error;
-}
+import { replyUpstreamError } from './reply-upstream-error.js';
 
 export const bearRoutes: FastifyPluginAsync = async (app) => {
   app.get('/api/bears', async (_request, reply) => {

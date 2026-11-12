@@ -1,22 +1,70 @@
-import { useState, type JSX } from 'react';
+import { useEffect, useState, type JSX } from 'react';
+import { createComment, deleteComment, loadComments } from './api';
 import CommentForm from './CommentForm';
 import CommentList from './CommentList';
 import type { Comment } from './types';
 
-const initialComments: Comment[] = [
-  {
-    id: 'initial-bob-fossil',
-    name: 'Bob Fossil',
-    text: 'Oh I am so glad you taught me all about the big brown angry guys...',
-  },
-];
+interface CommentSectionProps {
+  bearId: string;
+}
 
-export default function CommentSection(): JSX.Element {
+export default function CommentSection({
+  bearId,
+}: CommentSectionProps): JSX.Element {
   const [isOpen, setIsOpen] = useState(false);
-  const [comments, setComments] = useState<Comment[]>(initialComments);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const addComment = (name: string, text: string): void => {
-    setComments((prev) => [...prev, { id: crypto.randomUUID(), name, text }]);
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const load = async (): Promise<void> => {
+      setIsLoading(true);
+      try {
+        const loaded = await loadComments(bearId, controller.signal);
+        if (controller.signal.aborted) return;
+        setComments(loaded);
+        setError(null);
+      } catch (loadError) {
+        if (controller.signal.aborted) return;
+        console.error('Failed to load comments:', loadError);
+        setError('We could not load the comments right now.');
+      } finally {
+        if (!controller.signal.aborted) setIsLoading(false);
+      }
+    };
+
+    void load();
+
+    return () => {
+      controller.abort();
+    };
+  }, [bearId]);
+
+  // Resolves to true if the comment was saved, so the form knows to reset.
+  const addComment = async (author: string, text: string): Promise<boolean> => {
+    try {
+      const created = await createComment(bearId, author, text);
+      setComments((prev) => [...prev, created]);
+      setError(null);
+      return true;
+    } catch (createError) {
+      console.error('Failed to create comment:', createError);
+      setError('We could not save your comment. Please try again.');
+      return false;
+    }
+  };
+
+  const removeComment = async (commentId: string): Promise<void> => {
+    try {
+      await deleteComment(commentId);
+      setComments((prev) => prev.filter((comment) => comment.id !== commentId));
+      setError(null);
+    } catch (deleteError) {
+      console.error('Failed to delete comment:', deleteError);
+      setError('We could not delete the comment. Please try again.');
+    }
   };
 
   return (
@@ -37,7 +85,21 @@ export default function CommentSection(): JSX.Element {
           <h3>Add comment</h3>
           <CommentForm onAdd={addComment} />
           <h3>Comments</h3>
-          <CommentList comments={comments} />
+          {error !== null && (
+            <p className="bears-error" role="alert">
+              {error}
+            </p>
+          )}
+          {isLoading ? (
+            <p role="status">Loading comments…</p>
+          ) : (
+            <CommentList
+              comments={comments}
+              onDelete={(commentId) => {
+                void removeComment(commentId);
+              }}
+            />
+          )}
         </div>
       )}
     </section>
