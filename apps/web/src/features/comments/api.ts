@@ -1,25 +1,21 @@
 import { API_BASE_URL, checkResponseOk } from '../../api-error';
-import type { Comment } from './types';
+import type { Comment, CommentPage } from './types';
 
 // Comments live in our own API, per bear.
 export async function loadComments(
   bearId: string,
-  signal: AbortSignal
-): Promise<Comment[]> {
+  signal: AbortSignal,
+  cursor: string | null = null
+): Promise<CommentPage> {
+  const query = cursor === null ? '' : `?cursor=${encodeURIComponent(cursor)}`;
   const response = await fetch(
-    `${API_BASE_URL}/api/bears/${encodeURIComponent(bearId)}/comments`,
+    `${API_BASE_URL}/api/bears/${encodeURIComponent(bearId)}/comments${query}`,
     { signal }
   );
 
   await checkResponseOk(response);
 
-  const data: unknown = await response.json();
-
-  if (!Array.isArray(data)) {
-    throw new Error('Unexpected comments response');
-  }
-
-  return data as Comment[];
+  return (await response.json()) as CommentPage;
 }
 
 export async function createComment(

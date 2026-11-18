@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
 import type { Bear } from '../schemas/bear.js';
-import type { Comment } from '../schemas/comment.js';
+import { type Comment, toCommentPage } from '../schemas/comment.js';
 import type {
   BearRepository,
   CommentRepository,
@@ -15,17 +15,31 @@ export const createMemoryBearRepository = (
   const bears = [...initial].sort((a, b) => a.name.localeCompare(b.name));
 
   return {
-    list: async () => [...bears],
+    list: async (q) =>
+      bears.filter((bear) =>
+        bear.name.toLowerCase().includes((q ?? '').toLowerCase())
+      ),
     findById: async (id) => bears.find((bear) => bear.id === id),
   };
 };
+
+// Same order as the database: created_at, then id.
+const key = ({ createdAt, id }: { createdAt: string; id: string }): string =>
+  createdAt + id;
 
 export const createMemoryCommentRepository = (): CommentRepository => {
   const comments = new Map<string, Comment>();
 
   return {
-    listByBear: async (bearId) =>
-      [...comments.values()].filter((comment) => comment.bearId === bearId),
+    listByBear: async (bearId, { limit, after }) => {
+      const rows = [...comments.values()]
+        .filter((comment) => comment.bearId === bearId)
+        .sort((a, b) => key(a).localeCompare(key(b)))
+        .filter((comment) => after === undefined || key(comment) > key(after))
+        .slice(0, limit + 1);
+
+      return toCommentPage(rows, limit);
+    },
 
     create: async (bearId, input) => {
       const comment: Comment = {

@@ -4,7 +4,11 @@ import swaggerUi from '@fastify/swagger-ui';
 import { z } from 'zod';
 
 import { BearSchema } from './schemas/bear.js';
-import { CommentSchema, CreateCommentSchema } from './schemas/comment.js';
+import {
+  CommentPageSchema,
+  CommentSchema,
+  CreateCommentSchema,
+} from './schemas/comment.js';
 import { ProblemSchema } from './schemas/problem.js';
 
 // The OpenAPI document is generated from the same zod schemas that validate
@@ -24,6 +28,7 @@ function fromZod(
 export const refs = {
   bear: { $ref: 'Bear#' },
   comment: { $ref: 'Comment#' },
+  commentPage: { $ref: 'CommentPage#' },
   problem: { $ref: 'Problem#' },
 } as const;
 
@@ -35,6 +40,7 @@ export async function registerOpenApi(
 ): Promise<void> {
   app.addSchema({ $id: 'Bear', ...fromZod(BearSchema) });
   app.addSchema({ $id: 'Comment', ...fromZod(CommentSchema) });
+  app.addSchema({ $id: 'CommentPage', ...fromZod(CommentPageSchema) });
   app.addSchema({ $id: 'Problem', ...fromZod(ProblemSchema) });
 
   // Schemas only document the routes; the zod parsing in the handlers stays

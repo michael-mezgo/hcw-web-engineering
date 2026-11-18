@@ -3,7 +3,11 @@ import type { FastifyPluginAsync } from 'fastify';
 import { NotFoundError } from '../errors.js';
 import { createCommentBody, refs } from '../openapi.js';
 import { BearId } from '../schemas/bear.js';
-import { CommentId, CreateCommentSchema } from '../schemas/comment.js';
+import {
+  CommentId,
+  CommentsQuerySchema,
+  CreateCommentSchema,
+} from '../schemas/comment.js';
 import type { BearRepository, Repositories } from '../repositories/types.js';
 import { parseOrThrow } from '../validate.js';
 
@@ -29,16 +33,26 @@ export const commentRoutes: FastifyPluginAsync<Repositories> = async (
     {
       schema: {
         tags: ['comments'],
-        summary: 'List the comments of a bear',
+        summary:
+          'List the comments of a bear (cursor pagination: ?limit, ?cursor)',
         response: {
-          200: { type: 'array', items: refs.comment },
+          200: refs.commentPage,
           400: refs.problem,
           404: refs.problem,
         },
       },
     },
-    async (request) =>
-      await comments.listByBear(await requireBear(bears, request.params.id))
+    async (request) => {
+      const { limit, cursor } = parseOrThrow(
+        CommentsQuerySchema,
+        request.query
+      );
+
+      return await comments.listByBear(
+        await requireBear(bears, request.params.id),
+        { limit, after: cursor }
+      );
+    }
   );
 
   app.post<{ Params: { id: string } }>(

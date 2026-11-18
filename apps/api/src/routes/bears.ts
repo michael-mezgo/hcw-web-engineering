@@ -2,7 +2,7 @@ import type { FastifyPluginAsync } from 'fastify';
 
 import { NotFoundError } from '../errors.js';
 import { refs } from '../openapi.js';
-import { BearId } from '../schemas/bear.js';
+import { BearId, BearsQuerySchema } from '../schemas/bear.js';
 import type { Repositories } from '../repositories/types.js';
 import { parseOrThrow } from '../validate.js';
 
@@ -15,13 +15,15 @@ export const bearRoutes: FastifyPluginAsync<Repositories> = async (
     {
       schema: {
         tags: ['bears'],
-        summary: 'List all bears',
+        summary: 'List all bears, optionally filtered by name (?q=)',
         response: {
           200: { type: 'array', items: refs.bear },
+          400: refs.problem,
         },
       },
     },
-    async () => await bears.list()
+    async (request) =>
+      await bears.list(parseOrThrow(BearsQuerySchema, request.query).q)
   );
 
   app.get<{ Params: { id: string } }>(

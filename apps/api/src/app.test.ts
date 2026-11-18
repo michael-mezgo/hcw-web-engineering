@@ -9,7 +9,7 @@ import {
   createMemoryHealthCheck,
 } from './repositories/memory.js';
 import type { Bear } from './schemas/bear.js';
-import type { Comment } from './schemas/comment.js';
+import type { Comment, CommentPage } from './schemas/comment.js';
 
 const BEARS: Bear[] = [
   {
@@ -67,8 +67,14 @@ describe('bears', () => {
     ]);
   });
 
+  it('filters the bears by name with ?q=', async () => {
+    const res = await app.inject({ url: '/api/bears?q=polar' });
+
+    expect(res.json<Bear[]>().map((bear) => bear.id)).toEqual(['u-maritimus']);
+  });
+
   it('answers 404 for an unknown bear', async () => {
-    const res = await app.inject({ url: '/api/bears/gibt-es-nicht' });
+    const res = await app.inject({ url: '/api/bears/not-available' });
 
     expect(res.statusCode).toBe(404);
   });
@@ -88,8 +94,43 @@ describe('comments', () => {
     const own = await app.inject({ url: '/api/bears/u-arctos/comments' });
     const other = await app.inject({ url: '/api/bears/u-maritimus/comments' });
 
-    expect(own.json<Comment[]>()).toEqual([comment]);
-    expect(other.json<Comment[]>()).toEqual([]);
+    expect(own.json<CommentPage>()).toEqual({
+      items: [comment],
+      nextCursor: null,
+    });
+    expect(other.json<CommentPage>().items).toEqual([]);
+  });
+
+  it('pages through the comments with a cursor', async () => {
+    for (const text of ['1', '2', '3']) {
+      await postComment('u-arctos', { author: 'Bob', text });
+    }
+
+    const first = (
+      await app.inject({ url: '/api/bears/u-arctos/comments?limit=2' })
+    ).json<CommentPage>();
+    const second = (
+      await app.inject({
+        url: `/api/bears/u-arctos/comments?limit=2&cursor=${first.nextCursor}`,
+      })
+    ).json<CommentPage>();
+
+    // Same-millisecond comments are ordered by id, so only check the pages.
+    expect(first.items).toHaveLength(2);
+    expect(first.nextCursor).not.toBeNull();
+    expect(second.items).toHaveLength(1);
+    expect(
+      new Set([...first.items, ...second.items].map((c) => c.text))
+    ).toEqual(new Set(['1', '2', '3']));
+    expect(second.nextCursor).toBeNull();
+  });
+
+  it('rejects an invalid cursor with 400', async () => {
+    const res = await app.inject({
+      url: '/api/bears/u-arctos/comments?cursor=broken',
+    });
+
+    expect(res.statusCode).toBe(400);
   });
 
   it('rejects an invalid body with 400', async () => {

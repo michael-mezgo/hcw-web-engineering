@@ -14,4 +14,9 @@ export const BearSchema = z.object({
   range: z.string(),
 });
 
+// Query of GET /api/bears.
+export const BearsQuerySchema = z.object({
+  q: z.string().trim().max(100).optional(),
+});
+
 export type Bear = z.infer<typeof BearSchema>;

@@ -14,6 +14,7 @@ export default function CommentSection({
 }: CommentSectionProps): JSX.Element {
   const [isOpen, setIsOpen] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,7 +26,8 @@ export default function CommentSection({
       try {
         const loaded = await loadComments(bearId, controller.signal);
         if (controller.signal.aborted) return;
-        setComments(loaded);
+        setComments(loaded.items);
+        setNextCursor(loaded.nextCursor);
         setError(null);
       } catch (loadError) {
         if (controller.signal.aborted) return;
@@ -49,7 +51,8 @@ export default function CommentSection({
   const addComment = async (author: string, text: string): Promise<boolean> => {
     try {
       const created = await createComment(bearId, author, text);
-      setComments((prev) => [...prev, created]);
+      // With more pages left it would be loaded again later (duplicate).
+      if (nextCursor === null) setComments((prev) => [...prev, created]);
       setError(null);
       return true;
     } catch (createError) {
@@ -61,6 +64,24 @@ export default function CommentSection({
         )
       );
       return false;
+    }
+  };
+
+  const loadMore = async (): Promise<void> => {
+    try {
+      const page = await loadComments(
+        bearId,
+        new AbortController().signal,
+        nextCursor
+      );
+      setComments((prev) => [...prev, ...page.items]);
+      setNextCursor(page.nextCursor);
+      setError(null);
+    } catch (loadError) {
+      console.error('Failed to load more comments:', loadError);
+      setError(
+        errorMessage(loadError, 'We could not load more comments right now.')
+      );
     }
   };
 
@@ -112,6 +133,16 @@ export default function CommentSection({
                 void removeComment(commentId);
               }}
             />
+          )}
+          {nextCursor !== null && (
+            <button
+              type="button"
+              onClick={() => {
+                void loadMore();
+              }}
+            >
+              Load more comments
+            </button>
           )}
         </div>
       )}
