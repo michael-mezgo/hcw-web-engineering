@@ -1,15 +1,15 @@
 import type { FastifyPluginAsync } from 'fastify';
 
+import type { Database } from '../db.js';
 import { NotFoundError } from '../errors.js';
 import { refs } from '../openapi.js';
 import { BearId } from '../schemas/bear.js';
 import { getBearById, getBears } from '../services/bear-service.js';
-import type { WikipediaOptions } from '../upstream/wikipedia.js';
 import { parseOrThrow } from '../validate.js';
 
 export const bearRoutes: FastifyPluginAsync<{
-  wikipedia: WikipediaOptions;
-}> = async (app, { wikipedia }) => {
+  db: Database;
+}> = async (app, { db }) => {
   app.get(
     '/api/bears',
     {
@@ -18,12 +18,10 @@ export const bearRoutes: FastifyPluginAsync<{
         summary: 'List all bears',
         response: {
           200: { type: 'array', items: refs.bear },
-          502: refs.problem,
-          504: refs.problem,
         },
       },
     },
-    async () => await getBears(wikipedia)
+    async () => await getBears(db)
   );
 
   app.get<{ Params: { id: string } }>(
@@ -36,14 +34,12 @@ export const bearRoutes: FastifyPluginAsync<{
           200: refs.bear,
           400: refs.problem,
           404: refs.problem,
-          502: refs.problem,
-          504: refs.problem,
         },
       },
     },
     async (request) => {
       const id = parseOrThrow(BearId, request.params.id, '/id');
-      const bear = await getBearById(id, wikipedia);
+      const bear = await getBearById(db, id);
 
       if (bear === undefined) {
         throw new NotFoundError('Bear');

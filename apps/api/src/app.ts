@@ -6,6 +6,7 @@ import Fastify, { type FastifyError, type FastifyInstance } from 'fastify';
 import type { Pool } from 'pg';
 
 import type { Config } from './config.js';
+import { createDatabase } from './db.js';
 import {
   HttpError,
   NotFoundError,
@@ -107,13 +108,10 @@ export async function buildApp(
     return { status: 'ready' };
   });
 
-  const wikipedia = {
-    baseUrl: config.WIKIPEDIA_BASE_URL,
-    userAgent: config.USER_AGENT,
-  };
+  const db = createDatabase(pool);
 
-  await app.register(bearRoutes, { wikipedia });
-  await app.register(commentRoutes, { wikipedia });
+  await app.register(bearRoutes, { db });
+  await app.register(commentRoutes, { db });
 
   // Only for demonstrating the 500 path; off unless explicitly enabled.
   if (config.ENABLE_DEBUG_ROUTES === '1') {

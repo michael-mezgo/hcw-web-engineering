@@ -1,4 +1,11 @@
+import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
+
+export function createDatabase(pool: Pool): ReturnType<typeof drizzle> {
+  return drizzle(pool);
+}
+
+export type Database = ReturnType<typeof createDatabase>;
 
 export function createPool(
   connectionString: string,

@@ -1,105 +1,29 @@
-import { z } from 'zod';
+import { eq } from 'drizzle-orm';
 
-import { UpstreamError } from '../errors.js';
-import { BearSchema, type Bear } from '../schemas/bear.js';
-import {
-  fetchBearWikitext,
-  fetchImageUrl,
-  type WikipediaOptions,
-} from '../upstream/wikipedia.js';
+import type { Database } from '../db.js';
+import { bears } from '../schema.js';
+import type { Bear } from '../schemas/bear.js';
 
-interface ParsedBear {
-  id: string;
-  name: string;
-  binomial: string;
-  range: string;
-  fileName: string | null;
-}
+const bearColumns = {
+  id: bears.id,
+  name: bears.name,
+  binomial: bears.binomial,
+  imageUrl: bears.imageUrl,
+  range: bears.range,
+};
 
-export async function getBears(options: WikipediaOptions): Promise<Bear[]> {
-  const wikitext = await fetchBearWikitext(options);
-  const parsedBears = parseBears(wikitext);
-
-  // Never answer with an empty list when the upstream gave us nothing usable.
-  if (parsedBears.length === 0) {
-    throw new UpstreamError('Wikipedia page did not contain any bears');
-  }
-
-  const bears = await Promise.all(
-    parsedBears.map(async (bear) => await withImageUrl(bear, options))
-  );
-  const result = z.array(BearSchema).safeParse(bears);
-
-  if (!result.success) {
-    throw new UpstreamError('Parsed bear data failed validation');
-  }
-
-  return result.data;
+export async function getBears(db: Database): Promise<Bear[]> {
+  return await db.select(bearColumns).from(bears).orderBy(bears.name);
 }
 
 export async function getBearById(
-  id: string,
-  options: WikipediaOptions
+  db: Database,
+  id: string
 ): Promise<Bear | undefined> {
-  const bears = await getBears(options);
+  const [bear] = await db
+    .select(bearColumns)
+    .from(bears)
+    .where(eq(bears.id, id));
 
-  return bears.find((bear) => bear.id === id);
-}
-
-async function withImageUrl(
-  bear: ParsedBear,
-  options: WikipediaOptions
-): Promise<unknown> {
-  const { fileName, ...rest } = bear;
-  let imageUrl: string | null = null;
-
-  if (fileName !== null && fileName !== '') {
-    try {
-      imageUrl = await fetchImageUrl(options, fileName);
-    } catch (error: unknown) {
-      // A missing image must not hide the bear itself.
-      console.warn(`Could not load image for ${bear.name}:`, error);
-    }
-  }
-
-  return { ...rest, imageUrl };
-}
-
-function parseBears(wikitext: string): ParsedBear[] {
-  const seenBinomials = new Set<string>();
-  const bears: ParsedBear[] = [];
-
-  for (const table of wikitext.split('{{Species table/end}}')) {
-    for (const row of table.split('{{Species table/row')) {
-      const nameMatch = row.match(/\|name=\[\[(.*?)]]/);
-      const binomialMatch = row.match(/\|binomial=(.*?)\n/);
-      const imageMatch = row.match(/\|image=(.*?)(?:\s\||\n)/);
-      const rangeMatch = row.match(/\|range=(.*?)(?:\s\||\n)/);
-
-      const name = nameMatch?.[1]?.trim();
-      const binomial = binomialMatch?.[1];
-
-      if (name === undefined || binomial === undefined) continue;
-      if (seenBinomials.has(binomial)) continue;
-      seenBinomials.add(binomial);
-
-      bears.push({
-        id: toSlug(binomial),
-        name,
-        binomial,
-        range: rangeMatch?.[1]?.trim() ?? 'Unknown',
-        fileName: imageMatch?.[1]?.trim().replace('File:', '') ?? null,
-      });
-    }
-  }
-
-  return bears;
-}
-
-// URL-safe identifier: "Ursus arctos" -> "ursus-arctos".
-function toSlug(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+  return bear;
 }

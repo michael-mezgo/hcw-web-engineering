@@ -537,10 +537,34 @@ Add a `db` service (PostgreSQL, current major version) to `compose.yaml` with a 
 #### Task 2: Model bears and comments and write the first migration
 
 Define the schema in Drizzle: `bears` (id = slug as primary key, name, binomial, image_url, range, fetched_at) and `comments` (uuid id, bear_id with a foreign key and `ON DELETE CASCADE`, author, text, created_at), plus the indexes you expect to need. Generate the SQL migration with drizzle-kit, commit it, and add `npm run db:migrate` and `npm run db:seed`; the seed fetches the bears through your BFF code from Playground 4 (or from a committed fixture file) and upserts them. `GET /api/bears` now reads from the database.
+```bash
+cd apps/api/
+npx drizzle-kit generate --name init
+```
+
+**Ausführen** (auf einem frischen Clone ist die Datenbank leer, `GET /api/bears` liefert dann `[]`):
+
+```bash
+cp .env.example .env            # einmalig; Passwort in POSTGRES_PASSWORD und DATABASE_URL gleich setzen
+docker compose up -d db
+cd apps/api
+npm run db:migrate              # wendet drizzle/*.sql an
+npm run db:seed                 # holt die Bären einmal von Wikipedia und macht ein Upsert
+```
+
+Die Skripte lesen `DATABASE_URL` aus der `.env` im Repo-Root. Nur der Seed ruft Wikipedia auf, die API liest die Bären aus der Datenbank.
 
 **Done:** on an empty database `db:migrate` and `db:seed` create the tables and the bears, the migration SQL is in the repository, and the UI works without a live Wikipedia call.
 
 **Theory question:** Why migrations instead of creating tables from code at startup? What does forward-only mean, and what goes wrong when two branches both create migration 0003? Natural key (slug) versus surrogate key (uuid): when is which appropriate?
+
+> **Antwort:**
+>
+> - **Migrationen statt Tabellen beim Start:** Eine Migration ist eine versionierte SQL-Datei im Git. Sie ist reviewbar und auf jeder Umgebung gleich reproduzierbar, und die Datenbank merkt sich, welche schon angewendet wurden (`drizzle.__drizzle_migrations`).
+> - **Forward-only:** Eine einmal angewendete Migration wird nie mehr geändert oder gelöscht. Einen Fehler korrigiert man mit einer **neuen** Migration. Andere Umgebungen haben die alte schon ausgeführt, und manche Änderungen (z.B. `DROP COLUMN`) lassen sich ohnehin nicht verlustfrei zurücknehmen.
+> - **Zwei Branches mit `0003`:** Beide erzeugen `0003_*.sql` sowie einen Eintrag in `meta/_journal.json` und einen Snapshot. Das gibt einen Merge-Konflikt. Schlimmer ist ein Merge ohne Konflikt: Jeder Snapshot kennt die Änderung des anderen Branchs nicht, und die Schemas driften auseinander oder die zweite Migration scheitert (z.B. dieselbe Spalte wird zweimal angelegt). Lösung: einen Branch rebasen, seine noch nicht angewendete Migration löschen und neu generieren.
+> - **Natural Key (Slug):** Passt, wenn der Wert aus der Fachlichkeit kommt, eindeutig, lesbar und **stabil** ist. Das gilt für `bears.id`: Er steht in den URLs und dient dem Upsert im Seed. Er passt nicht, wenn sich der Wert ändern kann, weil dann alle Foreign Keys mitgeändert werden müssten. Unser Slug stammt aus Wikipedia (`u-arctos`), das ist bewusst akzeptiert.
+> - **Surrogate Key (UUID):** Passt, wenn es kein stabiles natürliches Merkmal gibt, wie bei einem Kommentar (derselbe Autor kann denselben Text zweimal schreiben). Außerdem ist eine UUID in einer URL nicht erratbar. Kosten: 16 statt 4 Byte pro Wert und schlechtere Lesbarkeit.
 
 #### Task 3: Introduce a repository layer
 
