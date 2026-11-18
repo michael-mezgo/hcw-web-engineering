@@ -3,10 +3,8 @@ import { STATUS_CODES } from 'node:http';
 
 import cors from '@fastify/cors';
 import Fastify, { type FastifyError, type FastifyInstance } from 'fastify';
-import type { Pool } from 'pg';
 
 import type { Config } from './config.js';
-import { createDatabase } from './db.js';
 import {
   HttpError,
   NotFoundError,
@@ -15,11 +13,12 @@ import {
 } from './errors.js';
 import { registerOpenApi } from './openapi.js';
 import { bearRoutes } from './routes/bears.js';
+import type { Repositories } from './repositories/types.js';
 import { commentRoutes } from './routes/comments.js';
 
 export async function buildApp(
   config: Config,
-  pool: Pool
+  repositories: Repositories
 ): Promise<FastifyInstance> {
   const app = Fastify({
     logger: true,
@@ -98,7 +97,7 @@ export async function buildApp(
 
   app.get('/health/ready', { schema: { hide: true } }, async () => {
     try {
-      await pool.query('SELECT 1');
+      await repositories.health.ping();
     } catch (err) {
       throw new ServiceUnavailableError(
         `Readiness check failed: ${err instanceof Error ? err.message : String(err)}`
@@ -108,10 +107,8 @@ export async function buildApp(
     return { status: 'ready' };
   });
 
-  const db = createDatabase(pool);
-
-  await app.register(bearRoutes, { db });
-  await app.register(commentRoutes, { db });
+  await app.register(bearRoutes, repositories);
+  await app.register(commentRoutes, repositories);
 
   // Only for demonstrating the 500 path; off unless explicitly enabled.
   if (config.ENABLE_DEBUG_ROUTES === '1') {

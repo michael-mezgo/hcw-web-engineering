@@ -574,6 +574,15 @@ Define `BearRepository` and `CommentRepository` as TypeScript interfaces and imp
 
 **Theory question:** What does the repository hide, and what does it cost? Explain the N+1 problem using "comments for all bears" and show how your repository avoids it.
 
+**Ausführen:** `cd apps/api && npm install && npm test` (läuft ohne Datenbank). Die Kommentare überleben einen Neustart: `docker compose up --build`, Kommentar anlegen, `docker compose restart api`, Kommentar ist noch da.
+
+**Antwort:**
+
+> - **Was das Repository versteckt:** Speichertechnologie, SQL und das Mapping. Routen kennen nur `BearRepository` und `CommentRepository` (`repositories/types.ts`). Ob PostgreSQL (`drizzle.ts`) oder eine `Map` (`memory.ts`) dahinter steckt, sehen sie nicht. Auch Spaltennamen und Typen (`Date` → ISO-String in `toComment`) bleiben im Repository.
+> - **Was es kostet:** Mehr Code und eine zusätzliche Ebene (Interface, zwei Implementierungen). Jede neue Abfrage braucht eine neue Methode, und Funktionen wie Transaktionen oder `FOR UPDATE` müssen bewusst ins Interface. Außerdem müssen beide Implementierungen gleich funktionieren.
+> - **N+1 am Beispiel „Kommentare aller Bären":** Naiv lädt man erst alle Bären (1 Query) und dann in einer Schleife die Kommentare pro Bär (N Queries): `for (const bear of bears) await comments.listByBear(bear.id)`. Bei 8 Bären sind das 9 Queries, bei 1000 Bären 1001. Jede kostet einen Round Trip und eine Pool-Verbindung, die Zeit wächst linear mit N, obwohl eine Antwort genügen würde.
+> - **Wie das Repository es vermeidet:** Jede Route braucht genau eine Query: `list()` ist ein `SELECT` auf `bears`, `listByBear()` ein `SELECT … WHERE bear_id = $1` (unterstützt vom Index `(bear_id, created_at)`). Keine Route ruft Repository-Methoden in einer Schleife auf. Braucht man die Kommentare für viele Bären, ergänzt man eine Mengen-Methode, die konstant viele Queries hat, z.B. `SELECT * FROM comments WHERE bear_id = ANY($1)` (danach im Code gruppieren) oder ein `JOIN`. Regel: Das Repository bietet Methoden, die zum Anwendungsfall passen, nicht nur „eine Entität auf einmal".
+
 #### Task 4: Pagination, filtering and one measured index
 
 Make `GET /api/bears/:id/comments` cursor-paginated (`limit`, `cursor` based on `created_at` and `id`, response contains `nextCursor`) and add `?q=` to `GET /api/bears` to filter by name. Write a script that seeds 100,000 comments, run `EXPLAIN ANALYZE` for the comments query without and with an index on (`bear_id`, `created_at`, `id`), and record both plans and timings in your README.

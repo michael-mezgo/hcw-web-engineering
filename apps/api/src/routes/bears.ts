@@ -1,15 +1,15 @@
 import type { FastifyPluginAsync } from 'fastify';
 
-import type { Database } from '../db.js';
 import { NotFoundError } from '../errors.js';
 import { refs } from '../openapi.js';
 import { BearId } from '../schemas/bear.js';
-import { getBearById, getBears } from '../services/bear-service.js';
+import type { Repositories } from '../repositories/types.js';
 import { parseOrThrow } from '../validate.js';
 
-export const bearRoutes: FastifyPluginAsync<{
-  db: Database;
-}> = async (app, { db }) => {
+export const bearRoutes: FastifyPluginAsync<Repositories> = async (
+  app,
+  { bears }
+) => {
   app.get(
     '/api/bears',
     {
@@ -21,7 +21,7 @@ export const bearRoutes: FastifyPluginAsync<{
         },
       },
     },
-    async () => await getBears(db)
+    async () => await bears.list()
   );
 
   app.get<{ Params: { id: string } }>(
@@ -39,7 +39,7 @@ export const bearRoutes: FastifyPluginAsync<{
     },
     async (request) => {
       const id = parseOrThrow(BearId, request.params.id, '/id');
-      const bear = await getBearById(db, id);
+      const bear = await bears.findById(id);
 
       if (bear === undefined) {
         throw new NotFoundError('Bear');

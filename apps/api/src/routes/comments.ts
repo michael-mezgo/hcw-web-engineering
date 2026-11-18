@@ -4,28 +4,26 @@ import { NotFoundError } from '../errors.js';
 import { createCommentBody, refs } from '../openapi.js';
 import { BearId } from '../schemas/bear.js';
 import { CommentId, CreateCommentSchema } from '../schemas/comment.js';
-import { getBearById } from '../services/bear-service.js';
-import {
-  addComment,
-  deleteComment,
-  listComments,
-} from '../services/comment-service.js';
-import type { Database } from '../db.js';
+import type { BearRepository, Repositories } from '../repositories/types.js';
 import { parseOrThrow } from '../validate.js';
 
-async function requireBear(db: Database, rawId: string): Promise<string> {
+async function requireBear(
+  bears: BearRepository,
+  rawId: string
+): Promise<string> {
   const id = parseOrThrow(BearId, rawId, '/id');
 
-  if ((await getBearById(db, id)) === undefined) {
+  if ((await bears.findById(id)) === undefined) {
     throw new NotFoundError('Bear');
   }
 
   return id;
 }
 
-export const commentRoutes: FastifyPluginAsync<{
-  db: Database;
-}> = async (app, { db }) => {
+export const commentRoutes: FastifyPluginAsync<Repositories> = async (
+  app,
+  { bears, comments }
+) => {
   app.get<{ Params: { id: string } }>(
     '/api/bears/:id/comments',
     {
@@ -39,7 +37,8 @@ export const commentRoutes: FastifyPluginAsync<{
         },
       },
     },
-    async (request) => listComments(await requireBear(db, request.params.id))
+    async (request) =>
+      await comments.listByBear(await requireBear(bears, request.params.id))
   );
 
   app.post<{ Params: { id: string } }>(
@@ -60,8 +59,8 @@ export const commentRoutes: FastifyPluginAsync<{
       // Validate the body before the (slower) bear lookup.
       parseOrThrow(BearId, request.params.id, '/id');
       const body = parseOrThrow(CreateCommentSchema, request.body);
-      const comment = addComment(
-        await requireBear(db, request.params.id),
+      const comment = await comments.create(
+        await requireBear(bears, request.params.id),
         body
       );
 
@@ -92,7 +91,7 @@ export const commentRoutes: FastifyPluginAsync<{
         '/commentId'
       );
 
-      if (!deleteComment(commentId)) {
+      if (!(await comments.delete(commentId))) {
         throw new NotFoundError('Comment');
       }
 
