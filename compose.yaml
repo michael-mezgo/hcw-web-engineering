@@ -6,6 +6,9 @@ services:
       # Dev-only default so a clean clone starts without a .env file.
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dev-only-password}
       POSTGRES_DB: bears
+    # connect from the host (db:migrate, db:seed)
+    ports:
+      - '127.0.0.1:5432:5432'
     volumes:
       - db-data:/var/lib/postgresql
     healthcheck:

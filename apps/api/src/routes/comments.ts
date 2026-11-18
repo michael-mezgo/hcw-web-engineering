@@ -10,16 +10,13 @@ import {
   deleteComment,
   listComments,
 } from '../services/comment-service.js';
-import type { WikipediaOptions } from '../upstream/wikipedia.js';
+import type { Database } from '../db.js';
 import { parseOrThrow } from '../validate.js';
 
-async function requireBear(
-  rawId: string,
-  wikipedia: WikipediaOptions
-): Promise<string> {
+async function requireBear(db: Database, rawId: string): Promise<string> {
   const id = parseOrThrow(BearId, rawId, '/id');
 
-  if ((await getBearById(id, wikipedia)) === undefined) {
+  if ((await getBearById(db, id)) === undefined) {
     throw new NotFoundError('Bear');
   }
 
@@ -27,8 +24,8 @@ async function requireBear(
 }
 
 export const commentRoutes: FastifyPluginAsync<{
-  wikipedia: WikipediaOptions;
-}> = async (app, { wikipedia }) => {
+  db: Database;
+}> = async (app, { db }) => {
   app.get<{ Params: { id: string } }>(
     '/api/bears/:id/comments',
     {
@@ -39,13 +36,10 @@ export const commentRoutes: FastifyPluginAsync<{
           200: { type: 'array', items: refs.comment },
           400: refs.problem,
           404: refs.problem,
-          502: refs.problem,
-          504: refs.problem,
         },
       },
     },
-    async (request) =>
-      listComments(await requireBear(request.params.id, wikipedia))
+    async (request) => listComments(await requireBear(db, request.params.id))
   );
 
   app.post<{ Params: { id: string } }>(
@@ -59,8 +53,6 @@ export const commentRoutes: FastifyPluginAsync<{
           201: refs.comment,
           400: refs.problem,
           404: refs.problem,
-          502: refs.problem,
-          504: refs.problem,
         },
       },
     },
@@ -69,7 +61,7 @@ export const commentRoutes: FastifyPluginAsync<{
       parseOrThrow(BearId, request.params.id, '/id');
       const body = parseOrThrow(CreateCommentSchema, request.body);
       const comment = addComment(
-        await requireBear(request.params.id, wikipedia),
+        await requireBear(db, request.params.id),
         body
       );
 
