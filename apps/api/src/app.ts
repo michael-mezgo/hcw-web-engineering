@@ -3,13 +3,23 @@ import { STATUS_CODES } from 'node:http';
 
 import cors from '@fastify/cors';
 import Fastify, { type FastifyError, type FastifyInstance } from 'fastify';
+import type { Pool } from 'pg';
 
-import { HttpError, NotFoundError, ValidationError } from './errors.js';
+import type { Config } from './config.js';
+import {
+  HttpError,
+  NotFoundError,
+  ServiceUnavailableError,
+  ValidationError,
+} from './errors.js';
 import { registerOpenApi } from './openapi.js';
 import { bearRoutes } from './routes/bears.js';
 import { commentRoutes } from './routes/comments.js';
 
-export async function buildApp(): Promise<FastifyInstance> {
+export async function buildApp(
+  config: Config,
+  pool: Pool
+): Promise<FastifyInstance> {
   const app = Fastify({
     logger: true,
     requestIdHeader: 'x-request-id',
@@ -18,10 +28,7 @@ export async function buildApp(): Promise<FastifyInstance> {
 
   // Only these origins may read responses cross-origin (comma-separated).
   await app.register(cors, {
-    origin: (
-      process.env.CORS_ORIGINS ?? 'http://localhost:4173,http://localhost:5173'
-    )
-      .split(',')
+    origin: config.CORS_ORIGINS.split(',')
       .map((origin) => origin.trim())
       .filter((origin) => origin !== ''),
     methods: ['GET', 'POST', 'DELETE'],
@@ -30,7 +37,7 @@ export async function buildApp(): Promise<FastifyInstance> {
     maxAge: 600,
   });
 
-  await registerOpenApi(app);
+  await registerOpenApi(app, config.APP_VERSION);
 
   // Every response carries the request id (generated or taken from the request).
   app.addHook('onRequest', async (request, reply) => {
@@ -84,15 +91,32 @@ export async function buildApp(): Promise<FastifyInstance> {
 
   app.get('/health', { schema: { hide: true } }, async () => ({
     status: 'ok',
-    version: process.env.APP_VERSION ?? 'dev',
+    version: config.APP_VERSION,
     uptime: Math.round(process.uptime()),
   }));
 
-  await app.register(bearRoutes);
-  await app.register(commentRoutes);
+  app.get('/health/ready', { schema: { hide: true } }, async () => {
+    try {
+      await pool.query('SELECT 1');
+    } catch (err) {
+      throw new ServiceUnavailableError(
+        `Readiness check failed: ${err instanceof Error ? err.message : String(err)}`
+      );
+    }
+
+    return { status: 'ready' };
+  });
+
+  const wikipedia = {
+    baseUrl: config.WIKIPEDIA_BASE_URL,
+    userAgent: config.USER_AGENT,
+  };
+
+  await app.register(bearRoutes, { wikipedia });
+  await app.register(commentRoutes, { wikipedia });
 
   // Only for demonstrating the 500 path; off unless explicitly enabled.
-  if (process.env.ENABLE_DEBUG_ROUTES === '1') {
+  if (config.ENABLE_DEBUG_ROUTES === '1') {
     app.get('/api/debug/provoke', { schema: { hide: true } }, async () => {
       throw new Error('Provoked 500 (secret internal detail)');
     });

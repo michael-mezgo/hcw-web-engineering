@@ -2,7 +2,11 @@ import { z } from 'zod';
 
 import { UpstreamError } from '../errors.js';
 import { BearSchema, type Bear } from '../schemas/bear.js';
-import { fetchBearWikitext, fetchImageUrl } from '../upstream/wikipedia.js';
+import {
+  fetchBearWikitext,
+  fetchImageUrl,
+  type WikipediaOptions,
+} from '../upstream/wikipedia.js';
 
 interface ParsedBear {
   id: string;
@@ -12,8 +16,8 @@ interface ParsedBear {
   fileName: string | null;
 }
 
-export async function getBears(): Promise<Bear[]> {
-  const wikitext = await fetchBearWikitext();
+export async function getBears(options: WikipediaOptions): Promise<Bear[]> {
+  const wikitext = await fetchBearWikitext(options);
   const parsedBears = parseBears(wikitext);
 
   // Never answer with an empty list when the upstream gave us nothing usable.
@@ -21,7 +25,9 @@ export async function getBears(): Promise<Bear[]> {
     throw new UpstreamError('Wikipedia page did not contain any bears');
   }
 
-  const bears = await Promise.all(parsedBears.map(withImageUrl));
+  const bears = await Promise.all(
+    parsedBears.map(async (bear) => await withImageUrl(bear, options))
+  );
   const result = z.array(BearSchema).safeParse(bears);
 
   if (!result.success) {
@@ -31,19 +37,25 @@ export async function getBears(): Promise<Bear[]> {
   return result.data;
 }
 
-export async function getBearById(id: string): Promise<Bear | undefined> {
-  const bears = await getBears();
+export async function getBearById(
+  id: string,
+  options: WikipediaOptions
+): Promise<Bear | undefined> {
+  const bears = await getBears(options);
 
   return bears.find((bear) => bear.id === id);
 }
 
-async function withImageUrl(bear: ParsedBear): Promise<unknown> {
+async function withImageUrl(
+  bear: ParsedBear,
+  options: WikipediaOptions
+): Promise<unknown> {
   const { fileName, ...rest } = bear;
   let imageUrl: string | null = null;
 
   if (fileName !== null && fileName !== '') {
     try {
-      imageUrl = await fetchImageUrl(fileName);
+      imageUrl = await fetchImageUrl(options, fileName);
     } catch (error: unknown) {
       // A missing image must not hide the bear itself.
       console.warn(`Could not load image for ${bear.name}:`, error);

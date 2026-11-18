@@ -523,6 +523,17 @@ Add a `db` service (PostgreSQL, current major version) to `compose.yaml` with a 
 
 **Theory question:** Liveness versus readiness: who uses each, and what goes wrong if the readiness check includes too many dependencies? Why is a connection pool necessary, and what limits its size?
 
+> **Hinweis zum Passwort:** `${POSTGRES_PASSWORD:-dev-only-password}` in `compose.yaml` ist ein Default **nur für die lokale Entwicklung**, damit ein frischer Clone ohne `.env` startet. In echten Umgebungen wird `POSTGRES_PASSWORD` über eine nicht eingecheckte `.env` oder die Umgebung gesetzt.
+
+
+> **Antwort:**
+>
+> - **Liveness** (`/health`) fragt: "Läuft der Prozess noch?" Sie wird vom Orchestrator genutzt (Docker, Kubernetes), der bei einem Fehler die Instanz **neu startet**. Sie prüft deshalb keine Abhängigkeiten.
+> - **Readiness** (`/health/ready`) fragt: "Kann die Instanz jetzt Anfragen bedienen?" Sie wird vom Load Balancer oder Orchestrator genutzt. Bei einem Fehler bekommt die Instanz **keinen Traffic mehr**, wird aber nicht neu gestartet.
+> - **Zu viele Abhängigkeiten in der Readiness:** Fällt ein einziger geprüfter Dienst aus (z.B. Wikipedia), melden alle Instanzen "nicht bereit", und aus einem Teilausfall wird ein Totalausfall. - Komplexe Checks belasten die Systeme. Deshalb prüft unsere Readiness nur die Datenbank mit einer trivialen Query.
+> - **Warum ein Pool:** Eine neue DB-Verbindung verursacht Overhead (TCP, Authentifizierung, bei PostgreSQL ein eigener Serverprozess). Ein Pool hält wenige Verbindungen offen. Außerdem begrenzt er, wie viele Verbindungen gleichzeitig zur Datenbank offen sind.
+> - **Was begrenzt die Größe:** `max_connections` von PostgreSQL sowie natürlich die verfügbaren Hardware Ressourcen.
+
 #### Task 2: Model bears and comments and write the first migration
 
 Define the schema in Drizzle: `bears` (id = slug as primary key, name, binomial, image_url, range, fetched_at) and `comments` (uuid id, bear_id with a foreign key and `ON DELETE CASCADE`, author, text, created_at), plus the indexes you expect to need. Generate the SQL migration with drizzle-kit, commit it, and add `npm run db:migrate` and `npm run db:seed`; the seed fetches the bears through your BFF code from Playground 4 (or from a committed fixture file) and upserts them. `GET /api/bears` now reads from the database.

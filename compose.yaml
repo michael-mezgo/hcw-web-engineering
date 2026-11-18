@@ -1,12 +1,31 @@
 services:
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: bears
+      # Dev-only default so a clean clone starts without a .env file.
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dev-only-password}
+      POSTGRES_DB: bears
+    volumes:
+      - db-data:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U bears -d bears']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   api:
     build:
       context: .
       dockerfile: apps/api/Dockerfile
     environment:
       PORT: '3000'
+      DATABASE_URL: postgres://bears:${POSTGRES_PASSWORD:-dev-only-password}@db:5432/bears
     ports:
       - '3000:3000'
+    depends_on:
+      db:
+        condition: service_healthy
 
   web:
     build:
@@ -16,3 +35,6 @@ services:
       - '8080:80'
     depends_on:
       - api
+
+volumes:
+  db-data:

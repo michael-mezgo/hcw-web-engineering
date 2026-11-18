@@ -1,12 +1,24 @@
 import { buildApp } from './app.js';
+import { loadConfig } from './config.js';
+import { createPool } from './db.js';
 
-const app = await buildApp();
+// Invalid environment: print the reasons only (no stack trace) and stop.
+let config: ReturnType<typeof loadConfig>;
+try {
+  config = loadConfig();
+} catch (err) {
+  console.error(err instanceof Error ? err.message : err);
+  process.exit(1);
+}
+
+const pool = createPool(config.DATABASE_URL, config.DB_POOL_MAX, (err) => {
+  app.log.error({ err }, 'idle database client failed');
+});
+
+const app = await buildApp(config, pool);
 
 try {
-  await app.listen({
-    port: Number(process.env.PORT ?? 3000),
-    host: '0.0.0.0',
-  });
+  await app.listen({ port: config.PORT, host: '0.0.0.0' });
 } catch (err) {
   app.log.error(err);
   process.exit(1);

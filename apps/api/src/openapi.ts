@@ -29,7 +29,10 @@ export const refs = {
 
 export const createCommentBody = fromZod(CreateCommentSchema, 'input');
 
-export async function registerOpenApi(app: FastifyInstance): Promise<void> {
+export async function registerOpenApi(
+  app: FastifyInstance,
+  version: string
+): Promise<void> {
   app.addSchema({ $id: 'Bear', ...fromZod(BearSchema) });
   app.addSchema({ $id: 'Comment', ...fromZod(CommentSchema) });
   app.addSchema({ $id: 'Problem', ...fromZod(ProblemSchema) });
@@ -46,7 +49,7 @@ export async function registerOpenApi(app: FastifyInstance): Promise<void> {
     },
     openapi: {
       openapi: '3.1.0',
-      info: { title: 'Bears API', version: process.env.APP_VERSION ?? 'dev' },
+      info: { title: 'Bears API', version },
     },
   });
   await app.register(swaggerUi, { routePrefix: '/api/docs' });

@@ -4,6 +4,11 @@ import { UpstreamError, UpstreamTimeoutError } from '../errors.js';
 
 const UPSTREAM_TIMEOUT_MS = 5000;
 
+export interface WikipediaOptions {
+  baseUrl: string;
+  userAgent: string;
+}
+
 const WikiParseResponse = z.object({
   parse: z.object({
     wikitext: z.object({
@@ -24,8 +29,10 @@ const WikiImageResponse = z.object({
   }),
 });
 
-export async function fetchBearWikitext(): Promise<string> {
-  const url = createWikipediaUrl();
+export async function fetchBearWikitext(
+  options: WikipediaOptions
+): Promise<string> {
+  const url = createWikipediaUrl(options.baseUrl);
 
   url.searchParams.set('action', 'parse');
   url.searchParams.set('page', 'List_of_ursids');
@@ -33,7 +40,9 @@ export async function fetchBearWikitext(): Promise<string> {
   url.searchParams.set('section', '3');
   url.searchParams.set('format', 'json');
 
-  const result = WikiParseResponse.safeParse(await fetchWikipediaJson(url));
+  const result = WikiParseResponse.safeParse(
+    await fetchWikipediaJson(url, options.userAgent)
+  );
 
   if (!result.success) {
     throw new UpstreamError('Wikipedia returned an unexpected response');
@@ -42,8 +51,11 @@ export async function fetchBearWikitext(): Promise<string> {
   return result.data.parse.wikitext['*'];
 }
 
-export async function fetchImageUrl(fileName: string): Promise<string | null> {
-  const url = createWikipediaUrl();
+export async function fetchImageUrl(
+  options: WikipediaOptions,
+  fileName: string
+): Promise<string | null> {
+  const url = createWikipediaUrl(options.baseUrl);
 
   url.searchParams.set('action', 'query');
   url.searchParams.set('titles', `File:${fileName}`);
@@ -51,7 +63,9 @@ export async function fetchImageUrl(fileName: string): Promise<string | null> {
   url.searchParams.set('iiprop', 'url');
   url.searchParams.set('format', 'json');
 
-  const result = WikiImageResponse.safeParse(await fetchWikipediaJson(url));
+  const result = WikiImageResponse.safeParse(
+    await fetchWikipediaJson(url, options.userAgent)
+  );
 
   if (!result.success) {
     throw new UpstreamError('Wikipedia returned an unexpected image response');
@@ -62,23 +76,19 @@ export async function fetchImageUrl(fileName: string): Promise<string | null> {
   return page?.imageinfo?.[0]?.url ?? null;
 }
 
-function createWikipediaUrl(): URL {
-  const baseUrl = process.env.WIKIPEDIA_BASE_URL ?? 'https://en.wikipedia.org';
-
+function createWikipediaUrl(baseUrl: string): URL {
   return new URL('/w/api.php', baseUrl);
 }
 
-async function fetchWikipediaJson(url: URL): Promise<unknown> {
+async function fetchWikipediaJson(
+  url: URL,
+  userAgent: string
+): Promise<unknown> {
   let response: Response;
 
   try {
     response = await fetch(url, {
-      headers: {
-        // Wikimedia's User-Agent policy: name the app and a way to contact us.
-        'User-Agent':
-          process.env.USER_AGENT ??
-          'BearApp/0.1 (university coursework; Node.js fetch)',
-      },
+      headers: { 'User-Agent': userAgent },
       signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
     });
   } catch (error: unknown) {

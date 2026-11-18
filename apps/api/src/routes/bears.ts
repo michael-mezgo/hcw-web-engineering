@@ -4,9 +4,12 @@ import { NotFoundError } from '../errors.js';
 import { refs } from '../openapi.js';
 import { BearId } from '../schemas/bear.js';
 import { getBearById, getBears } from '../services/bear-service.js';
+import type { WikipediaOptions } from '../upstream/wikipedia.js';
 import { parseOrThrow } from '../validate.js';
 
-export const bearRoutes: FastifyPluginAsync = async (app) => {
+export const bearRoutes: FastifyPluginAsync<{
+  wikipedia: WikipediaOptions;
+}> = async (app, { wikipedia }) => {
   app.get(
     '/api/bears',
     {
@@ -20,7 +23,7 @@ export const bearRoutes: FastifyPluginAsync = async (app) => {
         },
       },
     },
-    async () => await getBears()
+    async () => await getBears(wikipedia)
   );
 
   app.get<{ Params: { id: string } }>(
@@ -40,7 +43,7 @@ export const bearRoutes: FastifyPluginAsync = async (app) => {
     },
     async (request) => {
       const id = parseOrThrow(BearId, request.params.id, '/id');
-      const bear = await getBearById(id);
+      const bear = await getBearById(id, wikipedia);
 
       if (bear === undefined) {
         throw new NotFoundError('Bear');

@@ -10,19 +10,25 @@ import {
   deleteComment,
   listComments,
 } from '../services/comment-service.js';
+import type { WikipediaOptions } from '../upstream/wikipedia.js';
 import { parseOrThrow } from '../validate.js';
 
-async function requireBear(rawId: string): Promise<string> {
+async function requireBear(
+  rawId: string,
+  wikipedia: WikipediaOptions
+): Promise<string> {
   const id = parseOrThrow(BearId, rawId, '/id');
 
-  if ((await getBearById(id)) === undefined) {
+  if ((await getBearById(id, wikipedia)) === undefined) {
     throw new NotFoundError('Bear');
   }
 
   return id;
 }
 
-export const commentRoutes: FastifyPluginAsync = async (app) => {
+export const commentRoutes: FastifyPluginAsync<{
+  wikipedia: WikipediaOptions;
+}> = async (app, { wikipedia }) => {
   app.get<{ Params: { id: string } }>(
     '/api/bears/:id/comments',
     {
@@ -38,7 +44,8 @@ export const commentRoutes: FastifyPluginAsync = async (app) => {
         },
       },
     },
-    async (request) => listComments(await requireBear(request.params.id))
+    async (request) =>
+      listComments(await requireBear(request.params.id, wikipedia))
   );
 
   app.post<{ Params: { id: string } }>(
@@ -61,7 +68,10 @@ export const commentRoutes: FastifyPluginAsync = async (app) => {
       // Validate the body before the (slower) bear lookup.
       parseOrThrow(BearId, request.params.id, '/id');
       const body = parseOrThrow(CreateCommentSchema, request.body);
-      const comment = addComment(await requireBear(request.params.id), body);
+      const comment = addComment(
+        await requireBear(request.params.id, wikipedia),
+        body
+      );
 
       return await reply
         .code(201)

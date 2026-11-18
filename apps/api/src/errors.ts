@@ -27,6 +27,17 @@ export class NotFoundError extends HttpError {
   }
 }
 
+export class ServiceUnavailableError extends HttpError {
+  constructor(message: string) {
+    super(
+      503,
+      'Service Unavailable',
+      'The database is not available.',
+      message
+    );
+  }
+}
+
 export class UpstreamError extends HttpError {
   constructor(message: string) {
     super(502, 'Bad Gateway', 'Wikipedia is currently unavailable.', message);
