@@ -34,6 +34,7 @@ export const createDrizzleBearRepository = (db: Database): BearRepository => ({
 const toComment = (row: typeof comments.$inferSelect): Comment => ({
   ...row,
   createdAt: row.createdAt.toISOString(),
+  hiddenAt: row.hiddenAt?.toISOString() ?? null,
 });
 
 export const createDrizzleCommentRepository = (
@@ -64,6 +65,42 @@ export const createDrizzleCommentRepository = (
       .returning();
 
     return toComment(row);
+  },
+
+  findById: async (id) => {
+    const [row] = await db.select().from(comments).where(eq(comments.id, id));
+
+    return row === undefined ? undefined : toComment(row);
+  },
+
+  saveReports: async (id, { reportCount, hiddenAt }) => {
+    const [row] = await db
+      .update(comments)
+      .set({
+        reportCount,
+        hiddenAt: hiddenAt === null ? null : new Date(hiddenAt),
+      })
+      .where(eq(comments.id, id))
+      .returning();
+
+    return row === undefined ? undefined : toComment(row);
+  },
+
+  addReport: async (id, hideAt) => {
+    // The database counts, not TypeScript: the row is locked during the UPDATE,
+    // so concurrent reports wait for each other and none is lost.
+    const [row] = await db
+      .update(comments)
+      .set({
+        reportCount: sql`${comments.reportCount} + 1`,
+        hiddenAt: sql`CASE WHEN ${comments.reportCount} + 1 >= ${hideAt}
+          THEN coalesce(${comments.hiddenAt}, now())
+          ELSE ${comments.hiddenAt} END`,
+      })
+      .where(eq(comments.id, id))
+      .returning();
+
+    return row === undefined ? undefined : toComment(row);
   },
 
   delete: async (id) => {

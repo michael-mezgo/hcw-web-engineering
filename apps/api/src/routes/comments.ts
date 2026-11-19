@@ -9,6 +9,7 @@ import {
   CreateCommentSchema,
 } from '../schemas/comment.js';
 import type { BearRepository, Repositories } from '../repositories/types.js';
+import { createReportService } from '../services/reports.js';
 import { parseOrThrow } from '../validate.js';
 
 async function requireBear(
@@ -83,6 +84,27 @@ export const commentRoutes: FastifyPluginAsync<Repositories> = async (
         .header('Location', `/api/comments/${comment.id}`)
         .send(comment);
     }
+  );
+
+  const reports = createReportService(comments);
+
+  app.post<{ Params: { commentId: string } }>(
+    '/api/comments/:commentId/report',
+    {
+      schema: {
+        tags: ['comments'],
+        summary: 'Report a comment (hidden after 3 reports)',
+        response: {
+          200: refs.comment,
+          400: refs.problem,
+          404: refs.problem,
+        },
+      },
+    },
+    async (request) =>
+      await reports.report(
+        parseOrThrow(CommentId, request.params.commentId, '/commentId')
+      )
   );
 
   app.delete<{ Params: { commentId: string } }>(

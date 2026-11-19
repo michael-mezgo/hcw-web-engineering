@@ -15,6 +15,9 @@ import { registerOpenApi } from './openapi.js';
 import { bearRoutes } from './routes/bears.js';
 import type { Repositories } from './repositories/types.js';
 import { commentRoutes } from './routes/comments.js';
+import { CommentId } from './schemas/comment.js';
+import { createReportService } from './services/reports.js';
+import { parseOrThrow } from './validate.js';
 
 export async function buildApp(
   config: Config,
@@ -115,6 +118,16 @@ export async function buildApp(
     app.get('/api/debug/provoke', { schema: { hide: true } }, async () => {
       throw new Error('Provoked 500 (secret internal detail)');
     });
+
+    // The broken report version, to reproduce the lost update (race:reports).
+    app.post<{ Params: { commentId: string } }>(
+      '/api/debug/comments/:commentId/report-naive',
+      { schema: { hide: true } },
+      async (request) =>
+        await createReportService(repositories.comments).reportNaive(
+          parseOrThrow(CommentId, request.params.commentId, '/commentId')
+        )
+    );
   }
 
   return await app;

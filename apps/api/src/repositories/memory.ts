@@ -47,11 +47,51 @@ export const createMemoryCommentRepository = (): CommentRepository => {
         bearId,
         ...input,
         createdAt: new Date().toISOString(),
+        reportCount: 0,
+        hiddenAt: null,
       };
 
       comments.set(comment.id, comment);
 
       return comment;
+    },
+
+    findById: async (id) => comments.get(id),
+
+    saveReports: async (id, reports) => {
+      const comment = comments.get(id);
+
+      if (comment === undefined) {
+        return undefined;
+      }
+
+      const updated = { ...comment, ...reports };
+
+      comments.set(id, updated);
+
+      return updated;
+    },
+
+    addReport: async (id, hideAt) => {
+      const comment = comments.get(id);
+
+      if (comment === undefined) {
+        return undefined;
+      }
+
+      const reportCount = comment.reportCount + 1;
+      const updated = {
+        ...comment,
+        reportCount,
+        hiddenAt:
+          reportCount >= hideAt
+            ? (comment.hiddenAt ?? new Date().toISOString())
+            : comment.hiddenAt,
+      };
+
+      comments.set(id, updated);
+
+      return updated;
     },
 
     delete: async (id) => comments.delete(id),

@@ -18,6 +18,15 @@ export interface CommentRepository {
     page: { limit: number; after?: CommentCursor }
   ) => Promise<CommentPage>;
   create: (bearId: string, input: CreateComment) => Promise<Comment>;
+  findById: (id: string) => Promise<Comment | undefined>;
+  // Only for the naive report version
+  saveReports: (
+    id: string,
+    reports: { reportCount: number; hiddenAt: string | null }
+  ) => Promise<Comment | undefined>;
+  // One atomic step: report_count + 1, hidden once it reaches hideAt.
+  // undefined if there was no such comment
+  addReport: (id: string, hideAt: number) => Promise<Comment | undefined>;
   // false if there was no such comment
   delete: (id: string) => Promise<boolean>;
 }

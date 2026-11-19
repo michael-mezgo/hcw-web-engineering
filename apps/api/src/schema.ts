@@ -1,4 +1,11 @@
-import { index, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import {
+  index,
+  integer,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+} from 'drizzle-orm/pg-core';
 
 export const bears = pgTable('bears', {
   id: text('id').primaryKey(),
@@ -24,6 +31,9 @@ export const comments = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true, precision: 3 })
       .notNull()
       .defaultNow(),
+    reportCount: integer('report_count').notNull().default(0),
+    // null = visible, set when the comment reaches 3 reports
+    hiddenAt: timestamp('hidden_at', { withTimezone: true, precision: 3 }),
   },
   // Cursor pagination: WHERE bear_id = ? AND (created_at, id) > (?, ?) ORDER BY created_at, id
   (table) => [

@@ -16,6 +16,8 @@ export const CommentSchema = z.object({
   author: z.string(),
   text: z.string(),
   createdAt: z.iso.datetime(),
+  reportCount: z.number().int(),
+  hiddenAt: z.iso.datetime().nullable(), // null = visible
 });
 
 export type Comment = z.infer<typeof CommentSchema>;

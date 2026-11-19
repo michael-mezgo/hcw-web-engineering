@@ -23,6 +23,8 @@ services:
       dockerfile: apps/api/Dockerfile
     environment:
       PORT: '3000'
+      # 1 = also serve the debug routes (broken report version for the race demo)
+      ENABLE_DEBUG_ROUTES: ${ENABLE_DEBUG_ROUTES:-0}
       DATABASE_URL: postgres://bears:${POSTGRES_PASSWORD:-dev-only-password}@db:5432/bears
     ports:
       - '3000:3000'
