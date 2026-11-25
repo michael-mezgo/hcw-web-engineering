@@ -18,7 +18,11 @@ export interface CommentRepository {
     bearId: string,
     page: { limit: number; after?: CommentCursor }
   ) => Promise<CommentPage>;
-  create: (bearId: string, input: CreateComment) => Promise<Comment>;
+  create: (
+    bearId: string,
+    input: CreateComment,
+    authorId: string
+  ) => Promise<Comment>;
   findById: (id: string) => Promise<Comment | undefined>;
   // Only for the naive report version
   saveReports: (

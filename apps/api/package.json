@@ -10,6 +10,7 @@
     "start": "node dist/server.js",
     "db:migrate": "tsx --env-file-if-exists=../../.env src/migrate.ts",
     "db:seed": "tsx --env-file-if-exists=../../.env src/seed.ts",
+    "db:seed:moderator": "tsx --env-file-if-exists=../../.env src/seed-moderator.ts",
     "db:seed:comments": "tsx --env-file-if-exists=../../.env src/seed-comments.ts",
     "race:reports": "tsx --env-file-if-exists=../../.env src/report-race.ts",
     "test": "vitest run",

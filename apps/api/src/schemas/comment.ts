@@ -13,6 +13,7 @@ export type CreateComment = z.infer<typeof CreateCommentSchema>;
 export const CommentSchema = z.object({
   id: CommentId,
   bearId: z.string(),
+  authorId: z.uuid().nullable(),
   author: z.string(),
   text: z.string(),
   createdAt: z.iso.datetime(),

@@ -3,7 +3,8 @@ import { useMatch } from 'react-router-dom';
 
 import { API_BASE_URL, checkResponseOk, errorMessage } from '../../api-error';
 
-interface User {
+export interface User {
+  id: string;
   email: string;
   role: string;
 }
@@ -15,9 +16,14 @@ async function auth(path: string, options?: RequestInit): Promise<Response> {
   });
 }
 
-export default function SessionControls(): JSX.Element | null {
+export default function SessionControls({
+  user,
+  setUser,
+}: {
+  user: User | null;
+  setUser: (user: User | null) => void;
+}): JSX.Element | null {
   const onRegisterPage = useMatch('/register') !== null;
-  const [user, setUser] = useState<User | null>(null);
   const [busy, setBusy] = useState(true);
   const [error, setError] = useState('');
 
@@ -44,7 +50,7 @@ export default function SessionControls(): JSX.Element | null {
     return () => {
       controller.abort();
     };
-  }, []);
+  }, [setUser]);
 
   async function login(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();

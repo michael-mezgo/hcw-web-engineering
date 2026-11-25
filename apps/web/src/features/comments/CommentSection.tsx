@@ -1,4 +1,6 @@
 import { useEffect, useState, type JSX } from 'react';
+import { useOutletContext } from 'react-router-dom';
+import type { User } from '../layout/SessionControls';
 import { errorMessage } from '../../api-error';
 import { createComment, deleteComment, loadComments } from './api';
 import CommentForm from './CommentForm';
@@ -12,6 +14,7 @@ interface CommentSectionProps {
 export default function CommentSection({
   bearId,
 }: CommentSectionProps): JSX.Element {
+  const user = useOutletContext<User | null>();
   const [isOpen, setIsOpen] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
@@ -116,8 +119,14 @@ export default function CommentSection({
 
       {isOpen && (
         <div className="comment-wrapper">
-          <h3>Add comment</h3>
-          <CommentForm onAdd={addComment} />
+          {user === null ? (
+            <p>Log in to add a comment.</p>
+          ) : (
+            <>
+              <h3>Add comment</h3>
+              <CommentForm onAdd={addComment} />
+            </>
+          )}
           <h3>Comments</h3>
           {error !== null && (
             <p className="bears-error" role="alert">
@@ -129,6 +138,7 @@ export default function CommentSection({
           ) : (
             <CommentList
               comments={comments}
+              user={user}
               onDelete={(commentId) => {
                 void removeComment(commentId);
               }}

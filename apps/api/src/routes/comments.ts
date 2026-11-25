@@ -1,6 +1,6 @@
 import type { FastifyPluginAsync } from 'fastify';
 
-import { NotFoundError } from '../errors.js';
+import { HttpError, NotFoundError } from '../errors.js';
 import { createCommentBody, refs } from '../openapi.js';
 import { BearId } from '../schemas/bear.js';
 import {
@@ -8,8 +8,14 @@ import {
   CommentsQuerySchema,
   CreateCommentSchema,
 } from '../schemas/comment.js';
-import type { BearRepository, Repositories } from '../repositories/types.js';
+import type {
+  BearRepository,
+  CommentRepository,
+  Repositories,
+} from '../repositories/types.js';
+import type { AuthUser } from '../schemas/auth.js';
 import { createReportService } from '../services/reports.js';
+import { requireSessionUser } from '../services/session.js';
 import { parseOrThrow } from '../validate.js';
 
 async function requireBear(
@@ -25,9 +31,28 @@ async function requireBear(
   return id;
 }
 
+async function requireDeletePermission(
+  comments: CommentRepository,
+  commentId: string,
+  user: AuthUser
+): Promise<void> {
+  const comment = await comments.findById(commentId);
+  if (comment === undefined) {
+    throw new NotFoundError('Comment');
+  }
+
+  if (user.role !== 'moderator' && comment.authorId !== user.id) {
+    throw new HttpError(
+      403,
+      'Forbidden',
+      'You may only delete your own comments.'
+    );
+  }
+}
+
 export const commentRoutes: FastifyPluginAsync<Repositories> = async (
   app,
-  { bears, comments }
+  { bears, comments, users }
 ) => {
   app.get<{ Params: { id: string } }>(
     '/api/bears/:id/comments',
@@ -59,6 +84,8 @@ export const commentRoutes: FastifyPluginAsync<Repositories> = async (
   app.post<{ Params: { id: string } }>(
     '/api/bears/:id/comments',
     {
+      // The handler checks the session before validating the body with Zod.
+      attachValidation: true,
       schema: {
         tags: ['comments'],
         summary: 'Create a comment (201 with Location header)',
@@ -66,17 +93,20 @@ export const commentRoutes: FastifyPluginAsync<Repositories> = async (
         response: {
           201: refs.comment,
           400: refs.problem,
+          401: refs.problem,
           404: refs.problem,
         },
       },
     },
     async (request, reply) => {
+      const user = await requireSessionUser(users, request.headers.cookie);
       // Validate the body before the (slower) bear lookup.
       parseOrThrow(BearId, request.params.id, '/id');
       const body = parseOrThrow(CreateCommentSchema, request.body);
       const comment = await comments.create(
         await requireBear(bears, request.params.id),
-        body
+        body,
+        user.id
       );
 
       return await reply
@@ -116,17 +146,21 @@ export const commentRoutes: FastifyPluginAsync<Repositories> = async (
         response: {
           204: { type: 'null' },
           400: refs.problem,
+          401: refs.problem,
+          403: refs.problem,
           404: refs.problem,
         },
       },
     },
     async (request, reply) => {
+      const user = await requireSessionUser(users, request.headers.cookie);
       const commentId = parseOrThrow(
         CommentId,
         request.params.commentId,
         '/commentId'
       );
 
+      await requireDeletePermission(comments, commentId, user);
       if (!(await comments.delete(commentId))) {
         throw new NotFoundError('Comment');
       }

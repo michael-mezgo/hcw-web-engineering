@@ -660,9 +660,17 @@ Implement `POST /api/auth/login`, `POST /api/auth/logout` and `GET /api/auth/me`
 
 Comments get an `author_id`. Creating a comment requires a login (401 otherwise); deleting is allowed for the author and for users with the role `moderator` (403 otherwise). Seed one moderator. Enforce the rules in one place on the server (a `preHandler` or a policy function) and let the UI only reflect them by hiding the delete button where the call would fail.
 
+> ```bash
+> npm run db:seed:moderator -w apps/api
+> ```
+
 **Done:** a curl matrix (anonymous, author, other user, moderator) shows 401, 204, 403 and 204 for `DELETE`; the UI matches.
 
 **Theory question:** Authentication versus authorisation, 401 versus 403. Explain RBAC and ownership checks, what an IDOR vulnerability is (OWASP A01 Broken Access Control) and why hiding a button in the client is not a security control.
+
+> **Antwort:** Authentifizierung stellt über die Session fest, wer angemeldet ist. Autorisierung prüft, welche Aktion dieses Konto ausführen darf. Ohne gültige Session antwortet die API mit `401`. Ein angemeldetes Konto ohne Löschberechtigung erhält `403`.
+>
+> RBAC (Role-Based Access Control) erlaubt der Rolle `moderator`, jeden Kommentar zu löschen. Die Besitzprüfung vergleicht die Konto-ID aus der Session mit `author_id`. Bestehende Kommentare ohne zugeordnetes Konto können Moderatoren löschen. Eine IDOR-Schwachstelle liegt vor, wenn jemand über eine Kommentar-ID ohne serverseitige Besitz- oder Rollenprüfung auf einen fremden Kommentar zugreifen kann. Der ausgeblendete Button steuert die Oberfläche. Die API prüft jede Löschanfrage unabhängig davon. [OWASP A01 Broken Access Control](https://top10.owasp.org/2025/A01_2025-Broken_Access_Control/)
 
 #### Task 4: Harden the API
 

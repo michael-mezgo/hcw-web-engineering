@@ -59,10 +59,10 @@ export const createDrizzleCommentRepository = (
     return toCommentPage(rows.map(toComment), limit);
   },
 
-  create: async (bearId, input) => {
+  create: async (bearId, input, authorId) => {
     const [row] = await db
       .insert(comments)
-      .values({ bearId, ...input })
+      .values({ bearId, ...input, authorId })
       .returning();
 
     return toComment(row);

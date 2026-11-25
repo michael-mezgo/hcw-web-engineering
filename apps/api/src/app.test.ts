@@ -76,6 +76,8 @@ afterEach(async () => {
   await app.close();
 });
 
+let authorCookie: string;
+
 const postComment = async (
   bearId: string,
   payload: object
@@ -84,6 +86,7 @@ const postComment = async (
     method: 'POST',
     url: `/api/bears/${bearId}/comments`,
     payload,
+    headers: { cookie: authorCookie },
   });
 
 describe('bears', () => {
@@ -111,6 +114,26 @@ describe('bears', () => {
 });
 
 describe('comments', () => {
+  beforeEach(async () => {
+    const payload = { email: 'bob@example.com', password: 'test-password' };
+    const registered = await app.inject({
+      method: 'POST',
+      url: '/api/auth/register',
+      payload,
+    });
+    expect(registered.statusCode).toBe(201);
+
+    const login = await app.inject({
+      method: 'POST',
+      url: '/api/auth/login',
+      payload,
+    });
+    expect(login.statusCode).toBe(200);
+    authorCookie = login.cookies
+      .map(({ name, value }) => `${name}=${value}`)
+      .join('; ');
+  });
+
   it('creates a comment (201) and lists it for its bear only', async () => {
     const created = await postComment('u-arctos', {
       author: 'Bob',
@@ -186,10 +209,12 @@ describe('comments', () => {
     const first = await app.inject({
       method: 'DELETE',
       url: `/api/comments/${id}`,
+      headers: { cookie: authorCookie },
     });
     const second = await app.inject({
       method: 'DELETE',
       url: `/api/comments/${id}`,
+      headers: { cookie: authorCookie },
     });
 
     expect(first.statusCode).toBe(204);

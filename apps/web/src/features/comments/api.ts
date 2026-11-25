@@ -27,6 +27,7 @@ export async function createComment(
     `${API_BASE_URL}/api/bears/${encodeURIComponent(bearId)}/comments`,
     {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ author, text }),
     }
@@ -40,7 +41,7 @@ export async function createComment(
 export async function deleteComment(commentId: string): Promise<void> {
   const response = await fetch(
     `${API_BASE_URL}/api/comments/${encodeURIComponent(commentId)}`,
-    { method: 'DELETE' }
+    { method: 'DELETE', credentials: 'include' }
   );
 
   await checkResponseOk(response);

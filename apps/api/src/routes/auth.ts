@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from 'node:crypto';
+import { randomBytes } from 'node:crypto';
 
 import { argon2id, hash, verify } from 'argon2';
 import type { FastifyPluginAsync } from 'fastify';
@@ -9,23 +9,14 @@ import type { UserRepository } from '../repositories/types.js';
 import { LoginSchema, RegisterSchema } from '../schemas/auth.js';
 import { parseOrThrow } from '../validate.js';
 
-const COOKIE_NAME = 'bear_session';
+import {
+  COOKIE_NAME,
+  hashToken,
+  requireSessionUser,
+  sessionHash,
+} from '../services/session.js';
+
 const SESSION_SECONDS = 60 * 60 * 24;
-
-const hashToken = (token: string): string =>
-  createHash('sha256').update(token).digest('hex');
-
-function sessionHash(cookie: string | undefined): string | undefined {
-  const prefix = COOKIE_NAME + '=';
-  const token = cookie
-    ?.split(';')
-    .map((part) => part.trim())
-    .find((part) => part.startsWith(prefix))
-    ?.slice(prefix.length);
-  return token !== undefined && /^[a-f0-9]{64}$/.test(token)
-    ? hashToken(token)
-    : undefined;
-}
 
 export const authRoutes: FastifyPluginAsync<{
   users: UserRepository;
@@ -107,15 +98,7 @@ export const authRoutes: FastifyPluginAsync<{
     },
     async (request, reply) => {
       void reply.header('Cache-Control', 'no-store');
-      const tokenHash = sessionHash(request.headers.cookie);
-      const user =
-        tokenHash === undefined
-          ? undefined
-          : await users.findSessionUser(tokenHash);
-      if (user === undefined) {
-        throw new HttpError(401, 'Unauthorized', 'Login required.');
-      }
-      return user;
+      return await requireSessionUser(users, request.headers.cookie);
     }
   );
 

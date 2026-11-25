@@ -48,6 +48,9 @@ export const comments = pgTable(
       .notNull()
       .references(() => bears.id, { onDelete: 'cascade' }),
     author: text('author').notNull(),
+    authorId: uuid('author_id').references(() => users.id, {
+      onDelete: 'set null',
+    }),
     text: text('text').notNull(),
     // precision 3 = milliseconds like a JS Date, so the cursor matches the stored value exactly.
     createdAt: timestamp('created_at', { withTimezone: true, precision: 3 })

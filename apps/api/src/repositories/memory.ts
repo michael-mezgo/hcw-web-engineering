@@ -41,11 +41,12 @@ export const createMemoryCommentRepository = (): CommentRepository => {
       return toCommentPage(rows, limit);
     },
 
-    create: async (bearId, input) => {
+    create: async (bearId, input, authorId) => {
       const comment: Comment = {
         id: randomUUID(),
         bearId,
         ...input,
+        authorId,
         createdAt: new Date().toISOString(),
         reportCount: 0,
         hiddenAt: null,

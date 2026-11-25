@@ -36,6 +36,13 @@
       "when": 1795630192879,
       "tag": "0004_add_sessions",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1795638888442,
+      "tag": "0005_add_comment_author",
+      "breakpoints": true
     }
   ]
 }
