@@ -638,6 +638,24 @@ Implement `POST /api/auth/login`, `POST /api/auth/logout` and `GET /api/auth/me`
 
 **Theory question:** Compare session cookies and JWTs regarding revocation, statelessness, size and storage in the browser. What does an XSS attacker get in each case, and how does `SameSite` relate to CSRF?
 
+> ##### ADR 001 – Sitzungsverwaltung
+>
+> **Status** · Akzeptiert
+>
+> **Kontext**\
+> Die Anmeldung soll einen API-Neustart überdauern und beim Logout sofort widerrufen werden können.
+>
+> **Optionen**\
+> Eine serverseitige Session speichert den Zustand in PostgreSQL. Ein signiertes JWT lässt sich zustandslos prüfen. Für den sofortigen Widerruf braucht es zusätzlichen Serverzustand.
+>
+> **Entscheidung**\
+> Wir verwenden eine PostgreSQL-Session und speichern den Hash eines zufälligen Sitzungstokens. Das Cookie gilt 24 Stunden und nutzt `HttpOnly`, `SameSite=Lax`, `Path=/` und in Produktion `Secure`.
+>
+> **Konsequenzen**\
+> `/api/auth/me` fragt PostgreSQL ab. Logout löscht die Sitzung und entfernt das Cookie mit `Max-Age=0`.
+
+> **Antwort:** Eine Session braucht Serverzustand und lässt sich durch Löschen sofort widerrufen. Ein JWT ist ohne Serverzustand prüfbar und wegen Payload und Signatur meist größer. Beide Anmeldemittel können in einem `HttpOnly`-Cookie liegen. JavaScript kann dieses Cookie bei XSS nicht auslesen, kann aber im Browser authentifizierte Requests auslösen. Ein JWT im Local Storage kann bei XSS direkt ausgelesen und anderswo verwendet werden. `SameSite=Lax` reduziert CSRF, weil der Browser das Cookie bei Cross-Site-POSTs im Regelfall weglässt.
+
 #### Task 3: Authorisation for comments
 
 Comments get an `author_id`. Creating a comment requires a login (401 otherwise); deleting is allowed for the author and for users with the role `moderator` (403 otherwise). Seed one moderator. Enforce the rules in one place on the server (a `preHandler` or a policy function) and let the UI only reflect them by hiding the delete button where the call would fail.

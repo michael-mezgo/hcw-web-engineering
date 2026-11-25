@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import type { FastifyInstance, LightMyRequestResponse } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
@@ -8,6 +9,7 @@ import {
   createMemoryCommentRepository,
   createMemoryHealthCheck,
 } from './repositories/memory.js';
+import type { AuthUser } from './schemas/auth.js';
 import type { Bear } from './schemas/bear.js';
 import type { Comment, CommentPage } from './schemas/comment.js';
 
@@ -32,7 +34,8 @@ let app: FastifyInstance;
 
 // No database: the app gets the in-memory repositories.
 beforeEach(async () => {
-  const registeredEmails = new Set<string>();
+  const accounts = new Map<string, AuthUser & { passwordHash: string }>();
+  const sessions = new Map<string, string>();
 
   app = await buildApp(
     loadConfig({ DATABASE_URL: 'postgres://unused/unused' }),
@@ -41,11 +44,27 @@ beforeEach(async () => {
       comments: createMemoryCommentRepository(),
       health: createMemoryHealthCheck(),
       users: {
-        create: async (email) => {
-          if (registeredEmails.has(email)) {
+        findByEmail: async (email) => accounts.get(email),
+        createSession: async (tokenHash, userId) => {
+          sessions.set(tokenHash, userId);
+        },
+        findSessionUser: async (tokenHash) =>
+          [...accounts.values()].find(
+            ({ id }) => id === sessions.get(tokenHash)
+          ),
+        deleteSession: async (tokenHash) => {
+          sessions.delete(tokenHash);
+        },
+        create: async (email, passwordHash) => {
+          if (accounts.has(email)) {
             return false;
           }
-          registeredEmails.add(email);
+          accounts.set(email, {
+            id: randomUUID(),
+            email,
+            role: 'user',
+            passwordHash,
+          });
           return true;
         },
       },

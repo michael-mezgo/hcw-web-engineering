@@ -1,7 +1,7 @@
-import { and, asc, eq, getTableColumns, ilike, sql } from 'drizzle-orm';
+import { and, asc, eq, getTableColumns, gt, ilike, sql } from 'drizzle-orm';
 
 import type { Database } from '../db.js';
-import { bears, comments, users } from '../schema.js';
+import { bears, comments, sessions, users } from '../schema.js';
 import { type Comment, toCommentPage } from '../schemas/comment.js';
 import type {
   BearRepository,
@@ -123,6 +123,33 @@ export const createDrizzleUserRepository = (db: Database): UserRepository => ({
       .returning({ id: users.id });
 
     return rows.length > 0;
+  },
+
+  findByEmail: async (email) => {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  },
+
+  createSession: async (tokenHash, userId, expiresAt) => {
+    await db.insert(sessions).values({ tokenHash, userId, expiresAt });
+  },
+
+  findSessionUser: async (tokenHash) => {
+    const [user] = await db
+      .select({ id: users.id, email: users.email, role: users.role })
+      .from(sessions)
+      .innerJoin(users, eq(sessions.userId, users.id))
+      .where(
+        and(
+          eq(sessions.tokenHash, tokenHash),
+          gt(sessions.expiresAt, new Date())
+        )
+      );
+    return user;
+  },
+
+  deleteSession: async (tokenHash) => {
+    await db.delete(sessions).where(eq(sessions.tokenHash, tokenHash));
   },
 });
 

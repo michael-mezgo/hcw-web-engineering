@@ -17,6 +17,18 @@ export const users = pgTable('users', {
     .defaultNow(),
 });
 
+export const sessions = pgTable(
+  'sessions',
+  {
+    tokenHash: text('token_hash').primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  },
+  (table) => [index('sessions_user_id_idx').on(table.userId)]
+);
+
 export const bears = pgTable('bears', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),

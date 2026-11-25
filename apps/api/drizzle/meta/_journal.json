@@ -29,6 +29,13 @@
       "when": 1795627131417,
       "tag": "0003_add_users",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1795630192879,
+      "tag": "0004_add_sessions",
+      "breakpoints": true
     }
   ]
 }

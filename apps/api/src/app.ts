@@ -35,6 +35,7 @@ export async function buildApp(
     origin: config.CORS_ORIGINS.split(',')
       .map((origin) => origin.trim())
       .filter((origin) => origin !== ''),
+    credentials: true,
     methods: ['GET', 'POST', 'DELETE'],
     allowedHeaders: ['content-type', 'x-request-id'],
     exposedHeaders: ['x-request-id', 'location'],
@@ -111,7 +112,10 @@ export async function buildApp(
     return { status: 'ready' };
   });
 
-  await app.register(authRoutes, { users: repositories.users });
+  await app.register(authRoutes, {
+    users: repositories.users,
+    secureCookie: process.env.NODE_ENV === 'production',
+  });
   await app.register(bearRoutes, repositories);
   await app.register(commentRoutes, repositories);
 

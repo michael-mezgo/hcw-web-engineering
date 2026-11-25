@@ -1,3 +1,4 @@
+import type { AuthUser } from '../schemas/auth.js';
 import type { Bear } from '../schemas/bear.js';
 import type {
   Comment,
@@ -34,6 +35,16 @@ export interface CommentRepository {
 export interface UserRepository {
   // False if the email is already registered.
   create: (email: string, passwordHash: string) => Promise<boolean>;
+  findByEmail: (
+    email: string
+  ) => Promise<(AuthUser & { passwordHash: string }) | undefined>;
+  createSession: (
+    tokenHash: string,
+    userId: string,
+    expiresAt: Date
+  ) => Promise<void>;
+  findSessionUser: (tokenHash: string) => Promise<AuthUser | undefined>;
+  deleteSession: (tokenHash: string) => Promise<void>;
 }
 
 export interface HealthCheck {

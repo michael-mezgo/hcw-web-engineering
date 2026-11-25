@@ -4,6 +4,7 @@ import { SearchQueryContext } from '../search/SearchContext';
 import Footer from './Footer';
 import Header from './Header';
 import Nav from './Nav';
+import SessionControls from './SessionControls';
 
 export default function AppLayout(): JSX.Element {
   const [searchParams] = useSearchParams();
@@ -24,6 +25,7 @@ export default function AppLayout(): JSX.Element {
     <>
       <Header />
       <Nav query={query} onSearch={handleSearch} />
+      <SessionControls />
       <SearchQueryContext value={query}>
         <Outlet />
       </SearchQueryContext>
