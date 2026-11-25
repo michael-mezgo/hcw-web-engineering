@@ -5,6 +5,7 @@ import {
   createDrizzleBearRepository,
   createDrizzleCommentRepository,
   createDrizzleHealthCheck,
+  createDrizzleUserRepository,
 } from './repositories/drizzle.js';
 
 // Invalid environment: print the reasons only (no stack trace) and stop.
@@ -26,6 +27,7 @@ const app = await buildApp(config, {
   bears: createDrizzleBearRepository(db),
   comments: createDrizzleCommentRepository(db),
   health: createDrizzleHealthCheck(db),
+  users: createDrizzleUserRepository(db),
 });
 
 try {

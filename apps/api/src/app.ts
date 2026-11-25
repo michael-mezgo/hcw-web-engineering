@@ -12,6 +12,7 @@ import {
   ValidationError,
 } from './errors.js';
 import { registerOpenApi } from './openapi.js';
+import { authRoutes } from './routes/auth.js';
 import { bearRoutes } from './routes/bears.js';
 import type { Repositories } from './repositories/types.js';
 import { commentRoutes } from './routes/comments.js';
@@ -110,6 +111,7 @@ export async function buildApp(
     return { status: 'ready' };
   });
 
+  await app.register(authRoutes, { users: repositories.users });
   await app.register(bearRoutes, repositories);
   await app.register(commentRoutes, repositories);
 

@@ -3,6 +3,7 @@ import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import { z } from 'zod';
 
+import { RegisterSchema } from './schemas/auth.js';
 import { BearSchema } from './schemas/bear.js';
 import {
   CommentPageSchema,
@@ -31,6 +32,8 @@ export const refs = {
   commentPage: { $ref: 'CommentPage#' },
   problem: { $ref: 'Problem#' },
 } as const;
+
+export const registerBody = fromZod(RegisterSchema, 'input');
 
 export const createCommentBody = fromZod(CreateCommentSchema, 'input');
 

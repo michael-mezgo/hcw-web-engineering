@@ -1,4 +1,5 @@
 import type { JSX } from 'react';
+import { Link } from 'react-router-dom';
 import SearchBar from '../search/SearchBar';
 
 interface NavProps {
@@ -11,7 +12,7 @@ export default function Nav({ query, onSearch }: NavProps): JSX.Element {
     <div className="nav">
       <ul>
         <li>
-          <a href="#">Home</a>
+          <Link to="/">Home</Link>
         </li>
         <li>
           <a href="#">Our team</a>
@@ -21,6 +22,9 @@ export default function Nav({ query, onSearch }: NavProps): JSX.Element {
         </li>
         <li>
           <a href="#">Blog</a>
+        </li>
+        <li>
+          <Link to="/register">Register</Link>
         </li>
       </ul>
 

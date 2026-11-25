@@ -1,12 +1,13 @@
 import { and, asc, eq, getTableColumns, ilike, sql } from 'drizzle-orm';
 
 import type { Database } from '../db.js';
-import { bears, comments } from '../schema.js';
+import { bears, comments, users } from '../schema.js';
 import { type Comment, toCommentPage } from '../schemas/comment.js';
 import type {
   BearRepository,
   CommentRepository,
   HealthCheck,
+  UserRepository,
 } from './types.js';
 
 // All columns from the schema except fetchedAt (internal, not part of the API).
@@ -110,6 +111,18 @@ export const createDrizzleCommentRepository = (
       .returning({ id: comments.id });
 
     return deleted.length > 0;
+  },
+});
+
+export const createDrizzleUserRepository = (db: Database): UserRepository => ({
+  create: async (email, passwordHash) => {
+    const rows = await db
+      .insert(users)
+      .values({ email, passwordHash })
+      .onConflictDoNothing({ target: users.email })
+      .returning({ id: users.id });
+
+    return rows.length > 0;
   },
 });
 

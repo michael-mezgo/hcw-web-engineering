@@ -32,12 +32,23 @@ let app: FastifyInstance;
 
 // No database: the app gets the in-memory repositories.
 beforeEach(async () => {
+  const registeredEmails = new Set<string>();
+
   app = await buildApp(
     loadConfig({ DATABASE_URL: 'postgres://unused/unused' }),
     {
       bears: createMemoryBearRepository(BEARS),
       comments: createMemoryCommentRepository(),
       health: createMemoryHealthCheck(),
+      users: {
+        create: async (email) => {
+          if (registeredEmails.has(email)) {
+            return false;
+          }
+          registeredEmails.add(email);
+          return true;
+        },
+      },
     }
   );
 });

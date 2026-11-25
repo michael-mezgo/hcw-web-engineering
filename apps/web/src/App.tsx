@@ -5,6 +5,7 @@ import AppLayout from './features/layout/AppLayout';
 import BearDetailPage from './pages/BearDetailPage';
 import HomePage from './pages/HomePage';
 import NotFoundPage from './pages/NotFoundPage';
+import RegisterPage from './pages/RegisterPage';
 
 export default function App(): JSX.Element {
   return (
@@ -13,6 +14,7 @@ export default function App(): JSX.Element {
         <Route element={<AppLayout />}>
           <Route index element={<HomePage />} />
           <Route path="bears/:id" element={<BearDetailPage />} />
+          <Route path="register" element={<RegisterPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>

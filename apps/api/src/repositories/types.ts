@@ -31,6 +31,11 @@ export interface CommentRepository {
   delete: (id: string) => Promise<boolean>;
 }
 
+export interface UserRepository {
+  // False if the email is already registered.
+  create: (email: string, passwordHash: string) => Promise<boolean>;
+}
+
 export interface HealthCheck {
   ping: () => Promise<void>;
 }
@@ -39,4 +44,5 @@ export interface Repositories {
   bears: BearRepository;
   comments: CommentRepository;
   health: HealthCheck;
+  users: UserRepository;
 }
