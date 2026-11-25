@@ -2,6 +2,8 @@ import { randomUUID } from 'node:crypto';
 import { STATUS_CODES } from 'node:http';
 
 import cors from '@fastify/cors';
+import helmet from '@fastify/helmet';
+import rateLimit from '@fastify/rate-limit';
 import Fastify, { type FastifyError, type FastifyInstance } from 'fastify';
 
 import type { Config } from './config.js';
@@ -26,19 +28,19 @@ export async function buildApp(
 ): Promise<FastifyInstance> {
   const app = Fastify({
     logger: true,
+    bodyLimit: 16 * 1024,
     requestIdHeader: 'x-request-id',
     genReqId: () => randomUUID(),
   });
 
-  // Only these origins may read responses cross-origin (comma-separated).
+  await app.register(helmet);
   await app.register(cors, {
-    origin: config.CORS_ORIGINS.split(',')
-      .map((origin) => origin.trim())
-      .filter((origin) => origin !== ''),
+    origin: config.CORS_ORIGINS,
     credentials: true,
+    strictPreflight: true,
     methods: ['GET', 'POST', 'DELETE'],
     allowedHeaders: ['content-type', 'x-request-id'],
-    exposedHeaders: ['x-request-id', 'location'],
+    exposedHeaders: ['x-request-id', 'location', 'retry-after'],
     maxAge: 600,
   });
 
@@ -47,6 +49,14 @@ export async function buildApp(
   // Every response carries the request id (generated or taken from the request).
   app.addHook('onRequest', async (request, reply) => {
     void reply.header('x-request-id', request.id);
+  });
+
+  await app.register(rateLimit, {
+    global: false,
+    max: config.AUTH_RATE_LIMIT_MAX,
+    timeWindow: '1 minute',
+    errorResponseBuilder: (_request, context) =>
+      new HttpError(429, 'Too Many Requests', `Retry in ${context.after}.`),
   });
 
   app.setNotFoundHandler(async (request) => {
@@ -114,10 +124,14 @@ export async function buildApp(
 
   await app.register(authRoutes, {
     users: repositories.users,
-    secureCookie: process.env.NODE_ENV === 'production',
+    secureCookie: config.NODE_ENV === 'production',
+    sessionSecret: config.SESSION_SECRET,
   });
   await app.register(bearRoutes, repositories);
-  await app.register(commentRoutes, repositories);
+  await app.register(commentRoutes, {
+    ...repositories,
+    sessionSecret: config.SESSION_SECRET,
+  });
 
   // Only for demonstrating the 500 path; off unless explicitly enabled.
   if (config.ENABLE_DEBUG_ROUTES === '1') {

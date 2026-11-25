@@ -50,10 +50,9 @@ async function requireDeletePermission(
   }
 }
 
-export const commentRoutes: FastifyPluginAsync<Repositories> = async (
-  app,
-  { bears, comments, users }
-) => {
+export const commentRoutes: FastifyPluginAsync<
+  Repositories & { sessionSecret: string }
+> = async (app, { bears, comments, users, sessionSecret }) => {
   app.get<{ Params: { id: string } }>(
     '/api/bears/:id/comments',
     {
@@ -99,7 +98,11 @@ export const commentRoutes: FastifyPluginAsync<Repositories> = async (
       },
     },
     async (request, reply) => {
-      const user = await requireSessionUser(users, request.headers.cookie);
+      const user = await requireSessionUser(
+        users,
+        request.headers.cookie,
+        sessionSecret
+      );
       // Validate the body before the (slower) bear lookup.
       parseOrThrow(BearId, request.params.id, '/id');
       const body = parseOrThrow(CreateCommentSchema, request.body);
@@ -153,7 +156,11 @@ export const commentRoutes: FastifyPluginAsync<Repositories> = async (
       },
     },
     async (request, reply) => {
-      const user = await requireSessionUser(users, request.headers.cookie);
+      const user = await requireSessionUser(
+        users,
+        request.headers.cookie,
+        sessionSecret
+      );
       const commentId = parseOrThrow(
         CommentId,
         request.params.commentId,

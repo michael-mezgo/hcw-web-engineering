@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
+    "dev": "tsx watch --env-file-if-exists=../../.env src/server.ts",
     "typecheck": "tsc --noEmit",
     "build": "tsc",
     "start": "node dist/server.js",
@@ -14,6 +14,7 @@
     "db:seed:comments": "tsx --env-file-if-exists=../../.env src/seed-comments.ts",
     "race:reports": "tsx --env-file-if-exists=../../.env src/report-race.ts",
     "test": "vitest run",
+    "check:login-rate-limit": "node scripts/check-login-rate-limit.mjs",
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
     "format": "prettier --write \"src/**/*.ts\"",
@@ -28,6 +29,8 @@
   },
   "dependencies": {
     "@fastify/cors": "^11.4.1",
+    "@fastify/helmet": "^13.2.0",
+    "@fastify/rate-limit": "11.2.0",
     "@fastify/swagger": "^9.9.3",
     "@fastify/swagger-ui": "^6.1.3",
     "argon2": "^0.45.2",

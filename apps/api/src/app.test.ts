@@ -38,7 +38,10 @@ beforeEach(async () => {
   const sessions = new Map<string, string>();
 
   app = await buildApp(
-    loadConfig({ DATABASE_URL: 'postgres://unused/unused' }),
+    loadConfig({
+      DATABASE_URL: 'postgres://unused/unused',
+      SESSION_SECRET: 'test'.repeat(8),
+    }),
     {
       bears: createMemoryBearRepository(BEARS),
       comments: createMemoryCommentRepository(),

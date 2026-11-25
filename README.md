@@ -340,14 +340,14 @@ Add React (or another framework of your choice) to the existing Vite and TypeScr
 
 > **Imparativ**: Sagt, _wie_ sich das DOM ändert. Beispiele: `createElement`, `appendChild`. Das hat den Nachteil, dass man sich selbst darum kümmern muss. Bei jeder Interaktion kommen neue Fälle dazu, die man berücksichtigen muss. Das ist eine Fehlerquelle (vergessene Updates, doppelte Einträge, ...).
 > **Deklarativ**: Sagt, _was_ das DOM darstellen soll. React kümmert sich darum, dass das DOM immer den aktuellen Zustand der Anwendung widerspiegelt. Man beschreibt nur, wie die UI aussehen soll, und React kümmert sich um die Details der Aktualisierung.
-> 
+>
 > **Die 3 Phasen von React**:
 > 1. **Render**: Wird in 2 Fällen aufgerufen: initial Render und State Änderungen. React erstellt einen Virtual DOM basierend auf den Komponenten und deren Props/State.
 > 2. **Reconciliation**: React vergleicht den neuen Virtual DOM mit dem DOM. Es entscheidet, welche Teile des echten DOM aktualisiert werden müssen.
 > 3. **Commit**: React wendet die Änderungen am echten DOM an. Danach laufen `useLayoutEffect` und `useEffect`. Nur in dieser Phase wird das echte DOM verändert.
 >
 > **Warum sollte Code außerhalb von React das DOM nicht verändern?**: Wenn Code außerhalb von React das DOM verändert, kann React diese Änderungen nicht erkennen. Bei der nächsten Reconciliation könnte React die Änderungen überschreiben, da es den Zustand des Virtual DOMs als Quelle der Wahrheit betrachtet. Dies kann zu unerwartetem Verhalten führen.
-> 
+>
 > [Quelle](https://medium.com/@mukeshsharma20120/understanding-reacts-render-reconciliation-diffing-commit-phases-63913e775d8d)
 
 #### Task 2: Design the component tree
@@ -358,7 +358,7 @@ Decompose the interface into components organised by feature. Use props where ap
 
 > Eine Komponente ist eine abgeschlossene Einheit, die eine bestimmte Funktionalität kapselt. Sie hat klar definierte Eingaben (Props) und Ausgaben (Render-Ergebnis). Props sind wie Parameter für Funktionen: Sie geben der Komponente die Daten, die sie benötigt, um korrekt zu rendern. Typisierte Props stellen sicher, dass die Daten, die an eine Komponente übergeben werden, den erwarteten Typen entsprechen. Dies wirkt wie ein Vertrag zwischen der Komponente und ihrem Aufrufer: Wenn der Vertrag verletzt wird (z.B. falscher Typ), kann TypeScript einen Fehler melden.
 > Dies hält das Single-Responsibility-Prinzip ein, da jede Komponente nur für ihre eigene Logik verantwortlich ist. So ist es z.B. der Bear-List egal woher die Daten kommen, solange sie in der richtigen Form (Props) übergeben werden.
-> 
+>
 > **Stable Keys**: Stabiler Key - referenziert Listeneintrag eindeutig und bleibt über mehrere Renders hinweg gleich - unabhängig von Reihenfolge oder Filterung. React verwendet Keys, um Listeneinträge effizient zu aktualisieren. Wenn ein Key sich ändert, denkt React, dass es sich um einen neuen Eintrag handelt, und entfernt den alten Eintrag aus dem DOM und fügt den neuen hinzu. Dies kann zu unnötigen DOM-Operationen führen und den Zustand von Komponenten verlieren.
 > Wir nutzen einen Slug aus dem eindeutigen Bären-Namen als Key, da dieser stabil ist. Ein Array-Index wäre ungeeignet, da sich die Reihenfolge der Bären ändern kann (z.B. durch Filterung oder Sortierung).
 
@@ -371,9 +371,9 @@ Implement the comment toggle, comment form, and search behavior with React event
 > - **Props:** Props sind schreibgeschützte Eingaben, die von einer übergeordneten Komponente an eine untergeordnete Komponente übergeben werden. Sie dienen dazu, Daten und Funktionen weiterzugeben.
 > - **Stored State:** Stored State ist der interne Zustand einer Komponente. Dieser kann sich ändern -> Re-Render der Komponente.
 > - **Derived Values:** Derived Values sind Werte, die aus Props und/oder Stored State berechnet werden. Sie werden nicht direkt gespeichert, sondern bei jedem Render neu berechnet (z.B. Button "Hide Comments" vs. "Show Comments" - abhängig vom State `isOpen`).
-> 
+>
 > **Direct Mutation:** Wenn man den State direkt mutiert (z.B. `state.value = newValue`), erkennt React die Änderung nicht, da es auf Referenzänderungen achtet. Dies kann dazu führen, dass die Komponente nicht neu gerendert wird und der UI-Zustand inkonsistent wird.
-> 
+>
 > **Lifting vs. Context**: Lifting State bedeutet, den State in die nächsthöhere gemeinsame Komponente zu verschieben, sodass mehrere untergeordnete Komponenten darauf zugreifen können. / Context ist nützlich, wenn viele, tief verschachtelte Komponenten auf denselben State zugreifen müssen und das durchreichen als Props unpraktisch wird. Beispiel: Suchbegriff
 
 #### Task 4: Load and represent remote data
@@ -382,7 +382,7 @@ Load and validate the bear data within the React application. Represent loading,
 
 **Theory question:** Why is fetching data a synchronization with an external system rather than part of pure rendering? Explain how cleanup or cancellation prevents race conditions when a component unmounts or a request becomes irrelevant.
 
-> 
+>
 
 #### Task 5: Add client-side routing and verify the migration
 
@@ -679,6 +679,53 @@ Add rate limiting to login and register (429 with `Retry-After`), security heade
 **Done:** a brute-force script against `/api/auth/login` receives 429 after the configured number of attempts; `curl -I` shows the security headers; the secret scan runs in CI.
 
 **Theory question:** Map your measures to the OWASP Top 10: which items do they address? Explain token bucket versus fixed window rate limiting, and what "defence in depth" means for this API.
+
+> `curl -I http://localhost:3000/health` zeigt die Helmet-Header. Gitleaks prüft in CI die Git-Historie bei Pushes und Pull Requests.
+
+```text
+ curl -I http://localhost:3000/health
+HTTP/1.1 200 OK
+Content-Security-Policy: default-src 'self';base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';img-src 'self' data:;object-src 'none';script-src 'self';script-src-attr 'none';style-src 'self' https: 'unsafe-inline';upgrade-insecure-requests
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Resource-Policy: same-origin
+Origin-Agent-Cluster: ?1
+Referrer-Policy: no-referrer
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+X-Content-Type-Options: nosniff
+X-DNS-Prefetch-Control: off
+X-Download-Options: noopen
+X-Frame-Options: SAMEORIGIN
+X-Permitted-Cross-Domain-Policies: none
+X-XSS-Protection: 0
+vary: Origin
+access-control-allow-credentials: true
+access-control-expose-headers: x-request-id, location, retry-after
+x-request-id: 2514fd58-e6db-4efb-9303-a40f596f4bd3
+content-type: application/json; charset=utf-8
+content-length: 44
+Date: Wed, 25 Nov 2026 22:19:54 GMT
+Connection: keep-alive
+Keep-Alive: timeout=72
+```
+```text
+npm run check:login-rate-limit -w apps/api
+npm notice run api@1.0.0 check:login-rate-limit
+npm notice run node scripts/check-login-rate-limit.mjs
+Anfrage 1: HTTP 400
+Anfrage 2: HTTP 400
+Anfrage 3: HTTP 400
+Anfrage 4: HTTP 400
+Anfrage 5: HTTP 400
+Anfrage 6: HTTP 429 (Retry-After: 60 s)
+```
+>
+> **OWASP Top 10 (2025).** Das Login-Limit erschwert wiederholte Anmeldeversuche (A07 Authentication Failures). Helmet und die exakte CORS-Allowlist mit Credentials begrenzen unsichere Browser-Standardeinstellungen (A02 Security Misconfiguration). Ein separater Schlüssel für Session-HMACs und der Secret-Scan schützen kryptografisches Schlüsselmaterial (A04 Cryptographic Failures). Zod-Prüfungen reduzieren ungültige Eingaben und ergänzen parametrisierte Queries (A05 Injection). Das Body-Limit begrenzt den Ressourcenaufwand pro Anfrage (A06 Insecure Design). [OWASP Top 10 (2025)](https://top10.owasp.org/2025/)
+>
+> **Fixed Window – Zähler pro Zeitfenster.** Login und Registrierung erlauben standardmäßig je fünf Anfragen pro IP und Minute. Die erste Anfrage startet das Zeitfenster. Wenn es abläuft, springt der Zähler auf null. Wer nach der ersten Anfrage bis kurz vor Ablauf wartet, kann die vier übrigen Anfragen senden und direkt danach das neue Kontingent von fünf nutzen. So sind neun Anfragen in wenigen Sekunden möglich. Hinter dem Compose-Nginx teilen sich Clients das Kontingent seiner Proxy-IP.
+>
+> **Token Bucket – Guthaben pro IP.** Ein Token reicht für eine Anfrage. Jede IP kann zum Beispiel bis zu fünf Token sammeln. Jede Anfrage zieht einen Token ab. Alle zwölf Sekunden kommt ein Token dazu, bis das Guthaben voll ist. Mit fünf Token sind fünf Anfragen direkt hintereinander möglich. Ist das Guthaben leer, antwortet die API mit `429`, bis wieder ein Token verfügbar ist. Auf Dauer sind im Schnitt fünf Anfragen pro Minute möglich.
+>
+> **Defence in depth.** Ein Größenlimit greift vor dem Parsen, Zod prüft danach die Form der Eingaben, parametrisierte Abfragen schützen die Datenbank, und die Rollen- und Besitzprüfung entscheidet über den Zugriff. Helmet und CORS ergänzen diese serverseitigen Kontrollen im Browser.
 
 #### Task 5: Security review and one attack test
 

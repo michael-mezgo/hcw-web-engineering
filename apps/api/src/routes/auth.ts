@@ -21,13 +21,15 @@ const SESSION_SECONDS = 60 * 60 * 24;
 export const authRoutes: FastifyPluginAsync<{
   users: UserRepository;
   secureCookie: boolean;
-}> = async (app, { users, secureCookie }) => {
+  sessionSecret: string;
+}> = async (app, { users, secureCookie, sessionSecret }) => {
   const cookieFlags =
     'Path=/; HttpOnly; SameSite=Lax' + (secureCookie ? '; Secure' : '');
 
   app.post(
     '/api/auth/login',
     {
+      config: { rateLimit: {} },
       schema: {
         tags: ['auth'],
         body: loginBody,
@@ -35,6 +37,7 @@ export const authRoutes: FastifyPluginAsync<{
           200: authUserResponse,
           400: refs.problem,
           401: refs.problem,
+          429: refs.problem,
         },
       },
     },
@@ -46,14 +49,17 @@ export const authRoutes: FastifyPluginAsync<{
         throw new HttpError(401, 'Unauthorized', 'Invalid email or password.');
       }
 
-      const previousSession = sessionHash(request.headers.cookie);
+      const previousSession = sessionHash(
+        request.headers.cookie,
+        sessionSecret
+      );
       if (previousSession !== undefined) {
         await users.deleteSession(previousSession);
       }
 
       const token = randomBytes(32).toString('hex');
       await users.createSession(
-        hashToken(token),
+        hashToken(token, sessionSecret),
         user.id,
         new Date(Date.now() + SESSION_SECONDS * 1000)
       );
@@ -76,7 +82,7 @@ export const authRoutes: FastifyPluginAsync<{
     '/api/auth/logout',
     { schema: { tags: ['auth'], response: { 204: { type: 'null' } } } },
     async (request, reply) => {
-      const tokenHash = sessionHash(request.headers.cookie);
+      const tokenHash = sessionHash(request.headers.cookie, sessionSecret);
       if (tokenHash !== undefined) {
         await users.deleteSession(tokenHash);
       }
@@ -98,13 +104,18 @@ export const authRoutes: FastifyPluginAsync<{
     },
     async (request, reply) => {
       void reply.header('Cache-Control', 'no-store');
-      return await requireSessionUser(users, request.headers.cookie);
+      return await requireSessionUser(
+        users,
+        request.headers.cookie,
+        sessionSecret
+      );
     }
   );
 
   app.post(
     '/api/auth/register',
     {
+      config: { rateLimit: {} },
       schema: {
         tags: ['auth'],
         summary: 'Register a user',
@@ -113,6 +124,7 @@ export const authRoutes: FastifyPluginAsync<{
           201: { type: 'null' },
           400: refs.problem,
           409: refs.problem,
+          429: refs.problem,
         },
       },
     },

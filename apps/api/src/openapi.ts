@@ -64,5 +64,10 @@ export async function registerOpenApi(
       info: { title: 'Bears API', version },
     },
   });
-  await app.register(swaggerUi, { routePrefix: '/api/docs' });
+  await app.register(swaggerUi, {
+    routePrefix: '/api/docs',
+    staticCSP: true,
+    transformStaticCSP: (policy) =>
+      policy.replace(/\s*upgrade-insecure-requests;/, ''),
+  });
 }
